@@ -13,6 +13,10 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS
     Gui
     Concurrent
 )
+
+include_directories(../ACD2FileQt/lib)
+add_subdirectory(../ACD2FileQt ACD2File)
+
 qt_standard_project_setup()
 
 set(RESOURCE_FILES res.qrc)
@@ -39,6 +43,7 @@ target_link_libraries(ACDAnalizer PRIVATE
     Qt6::Quick
     Qt6::Widgets
     Qt6::Gui
+    ACD2File
 )
 
 include(GNUInstallDirs)
