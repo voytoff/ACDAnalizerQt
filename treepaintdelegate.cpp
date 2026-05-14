@@ -1,10 +1,9 @@
 #include "treepaintdelegate.h"
 
-void TreePaintDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
-{
-  if (index.column() == 1 /*Name*/) {
-    QModelIndex active = index.sibling(index.row(), 2 /*Active*/);
-    QVariant bold = active.data(Qt::DisplayRole);
+void TreePaintDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+  if (index.column() == 1 /*name*/) {
+    QModelIndex active = index.sibling(index.row(), 0 /*checked*/);
+    QVariant bold = active.data(Qt::CheckStateRole);
     if (bold.isValid() && bold.toBool()) {
       QStyleOptionViewItem opt = option;
       opt.font.setBold(true);

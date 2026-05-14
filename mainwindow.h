@@ -5,6 +5,7 @@
 #include "treemodel.h"
 #include <QMainWindow>
 #include <QTreeView>
+#include <QPromise>
 
 class MainWindow : public QMainWindow
 {
@@ -21,19 +22,21 @@ protected:
   ACDObject *acdObject;
 
 private:
-  void openExp();
-  void closeExp();
   void createMenuBar();
   void createDashboard();
   void restoreLayout();
   void saveLayout();
   void createTree();
+  void adjustHeader();
   void selectChannel();
+  void openACD(QPromise<ACDObject *> &promise, QStringList files);
 
   QTreeView *view;
   TreeModel *model;
 
 public slots:
+  void openExp();
+  void closeExp();
 
 signals:
 };

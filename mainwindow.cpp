@@ -13,6 +13,8 @@
 #include <QSplitter>
 #include <QGroupBox>
 #include <QStatusBar>
+#include <QtConcurrentTask>
+#include <QHeaderView>
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow{parent}
@@ -23,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
   this->setWindowIcon(QIcon::fromTheme(QIcon::ThemeIcon::NetworkWired));
   createMenuBar();
   createTree();
+  //adjustHeader();
   createDashboard();
   statusBar()->setSizeGripEnabled(true);
   restoreLayout();
@@ -48,7 +51,7 @@ void MainWindow::createMenuBar()
   fileMenu->addSeparator();
   fileMenu->addAction(quitAction);
 
-  menuBar()->setNativeMenuBar(false);
+  //menuBar()->setNativeMenuBar(false);
 }
 
 void MainWindow::createDashboard() {
@@ -75,13 +78,28 @@ void MainWindow::openExp() {
                                                     tr("ACD2 файлы (*.acd);;Все файлы (*)"),
                                                     &selectedFilter,
                                                     options);
-  if (!files.isEmpty()) {
-    auto openFilesPath = files.constFirst();
-    //openFileNamesLabel->setText(u'[' + files.join(", "_L1) + u']');
+  if (!files.isEmpty() && files.length() > 0) {
+    auto future = QtConcurrent::task(&MainWindow::openACD)
+                    .withArguments(this, files)
+                    .withPriority(5)
+                    .spawn();
+    future.waitForFinished();
+    acdObject = future.result();
+    model->init(acdObject);
+    //adjustHeader();
   }
 }
 
+void MainWindow::openACD(QPromise<ACDObject*> &promise, QStringList files) {
+  ACDObject* acdo = new ACDObject(files);
+  connect(acdo, &ACDObject::fileLoaded, this, [=](int index, QString fileName) { qDebug() << index << fileName; });
+  acdo->load();
+  promise.addResult(acdo);
+}
+
 void MainWindow::closeExp() {
+  if (acdObject)
+    acdObject->close();
 }
 
 void MainWindow::restoreLayout() {
@@ -102,6 +120,7 @@ void MainWindow::createTree() {
   view->setRootIsDecorated(false);
   view->setAlternatingRowColors(false);
   view->setSortingEnabled(false);
+
   connect(view, &QTreeView::doubleClicked, this, &MainWindow::selectChannel);
 
   QLocale locale = view->locale();
@@ -121,5 +140,18 @@ void MainWindow::selectChannel() {
 void MainWindow::closeEvent(QCloseEvent *event) {
   saveLayout();
   QMainWindow::closeEvent(event);
+}
+
+void MainWindow::adjustHeader() {
+  for (int n = 0; n < model->columnCount(QModelIndex()); n++)
+    if (!model->visible(n))
+      view->hideColumn(n);
+
+  if (model) {
+    QHeaderView *header = view->header();
+    header->setSectionResizeMode(0, QHeaderView::Fixed);
+    header->resizeSection(0, 20);
+    header->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+  }
 }
 
