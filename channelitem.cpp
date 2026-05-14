@@ -1,45 +1,52 @@
 #include "channelitem.h"
 
-Channel::Channel(QVariantList data, Channel *parentItem)
-  : itemData(data)
-  , _parentItem(parentItem)
-{}
+ChannelItem::ChannelItem(ChannelBlock* channelBlock, ChannelItem *parentItem)
+  : channelBlock(channelBlock) , parent(parentItem) {}
 
-void Channel::appendChild(Channel &child) {
+ChannelItem::ChannelItem(QChar symbol) : symbol(symbol) {}
+
+void ChannelItem::appendChild(ChannelItem &child) {
   childItems.append(child);
 }
 /*
-Channel *Channel::child(int row) {
+ChannelItem *ChannelItem::child(int row) {
   return row >= 0 && row < childCount() ? &childItems[row] : nullptr;
 }
 */
-int Channel::childCount() const {
+int ChannelItem::childCount() const {
   return childItems.length();
 }
 
-int Channel::columnCount() const {
-  return itemData.count();
+int ChannelItem::columnCount() const {
+  return channelBlock ? 3 : 1;
 }
 
-QVariant Channel::data(int column) const {
-  return itemData.value(column);
+QVariant ChannelItem::data(int column) const {
+  if (channelBlock) {
+    switch (column) {
+      case 0: return symbol;
+      case 1: return channelBlock->name;
+      case 2: return channelBlock->name;
+      default: return QVariant();
+      }
+  } else return symbol;
 }
 
-int Channel::row() const {
-  if (_parentItem == nullptr)
+int ChannelItem::row() const {
+  if (parent == nullptr)
     return 0;
   const auto it = std::find_if(
-    _parentItem->childItems.begin(), _parentItem->childItems.end(),
-    [this](Channel &treeItem) {
-      return &treeItem == this;
+    parent->childItems.begin(), parent->childItems.end(),
+    [this](ChannelItem &treeItem) {
+      return treeItem.channelBlock->channelID == this->channelBlock->channelID;
     });
 
-  if (it != _parentItem->childItems.cend())
-    return std::distance(_parentItem->childItems.begin(), it);
+  if (it != parent->childItems.cend())
+    return std::distance(parent->childItems.begin(), it);
   Q_ASSERT(false);
   return -1;
 }
 
-Channel *Channel::parentItem() {
-  return _parentItem;
+ChannelItem *ChannelItem::parentItem() {
+  return parent;
 }

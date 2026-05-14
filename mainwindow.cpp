@@ -3,6 +3,7 @@
 
 #include <QFileDialog>
 #include <QFlag>
+#include <QFile>
 #include <QMenu>
 #include <QMenuBar>
 #include <QString>
@@ -15,11 +16,18 @@
 #include <QStatusBar>
 #include <QtConcurrentTask>
 #include <QHeaderView>
+#include <QScreen>
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow{parent}
-  , model(new TreeModel(this))
+  //, model(new TreeModel(this))
 {
+
+  QFile file(":/default.txt");
+  file.open(QIODevice::ReadOnly | QIODevice::Text);
+  model = new TreeModel(QString::fromUtf8(file.readAll()));
+  file.close();
+
   QIcon::setThemeName("Material Symbols Outlined");
   QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
   this->setWindowIcon(QIcon::fromTheme(QIcon::ThemeIcon::NetworkWired));
@@ -85,7 +93,7 @@ void MainWindow::openExp() {
                     .spawn();
     future.waitForFinished();
     acdObject = future.result();
-    model->init(acdObject);
+    //model->init(acdObject);
     //adjustHeader();
   }
 }
@@ -117,9 +125,6 @@ void MainWindow::saveLayout() {
 void MainWindow::createTree() {
   view = new QTreeView();
   view->setModel(model);
-  view->setRootIsDecorated(false);
-  view->setAlternatingRowColors(false);
-  view->setSortingEnabled(false);
 
   connect(view, &QTreeView::doubleClicked, this, &MainWindow::selectChannel);
 
@@ -143,7 +148,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 void MainWindow::adjustHeader() {
-  for (int n = 0; n < model->columnCount(QModelIndex()); n++)
+  /*for (int n = 0; n < model->columnCount(QModelIndex()); n++)
     if (!model->visible(n))
       view->hideColumn(n);
 
@@ -152,6 +157,6 @@ void MainWindow::adjustHeader() {
     header->setSectionResizeMode(0, QHeaderView::Fixed);
     header->resizeSection(0, 20);
     header->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-  }
+  }*/
 }
 

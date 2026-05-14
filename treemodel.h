@@ -1,38 +1,38 @@
+// Copyright (C) 2016 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+
 #ifndef TREEMODEL_H
 #define TREEMODEL_H
 
-#include "acdobject.h"
-#include "channelitem.h"
-#include <QObject>
 #include <QAbstractItemModel>
+#include <QModelIndex>
+#include <QVariant>
+
+class TreeItem;
 
 class TreeModel : public QAbstractItemModel
 {
   Q_OBJECT
+
 public:
-  explicit TreeModel(QObject *parent = nullptr);
+  Q_DISABLE_COPY_MOVE(TreeModel)
+
   explicit TreeModel(const QString &data, QObject *parent = nullptr);
   ~TreeModel() override;
 
-  int rowCount(const QModelIndex &parent) const override;
-  int columnCount(const QModelIndex &parent) const override;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
-  Qt::ItemFlags flags(const QModelIndex &index) const override;
-  bool visible(int col) const;
   QVariant data(const QModelIndex &index, int role) const override;
-  bool setData(const QModelIndex &index, const QVariant &value, int role) override;
-
+  Qt::ItemFlags flags(const QModelIndex &index) const override;
+  QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
   QModelIndex index(int row, int column, const QModelIndex &parent = {}) const override;
   QModelIndex parent(const QModelIndex &index) const override;
+  int rowCount(const QModelIndex &parent = {}) const override;
+  int columnCount(const QModelIndex &parent = {}) const override;
+  bool setData(const QModelIndex &index, const QVariant &value, int role) override;
 
 private:
-  QList<Channel*> channels;
-  Channel* rootItem = nullptr;
+  static void setupModelData(const QList<QStringView> &lines, TreeItem *parent);
 
-public slots:
-  void init(ACDObject* source);
-
-signals:
+  std::unique_ptr<TreeItem> rootItem;
 };
 
 #endif // TREEMODEL_H

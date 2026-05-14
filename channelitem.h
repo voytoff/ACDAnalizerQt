@@ -2,32 +2,32 @@
 #define CHANNELITEM_H
 
 #include <QVariant>
+#include "channelblock.h"
 
-class Channel {
+class ChannelItem {
 public:
-  explicit Channel(QVariantList data, Channel *parentItem = nullptr);
+  explicit ChannelItem(ChannelBlock* channelBlock, ChannelItem *parentItem = nullptr);
+  explicit ChannelItem(QChar symbol);
 
-  void appendChild(Channel &child);
-  //Channel *child(int row);
+  void appendChild(ChannelItem &child);
+  ChannelItem *child(int row);
   int childCount() const;
   int columnCount() const;
   QVariant data(int column) const;
   int row() const;
-  Channel *parentItem();
+  ChannelItem *parentItem();
 
-  QChar letter;
-  int channelID;
-  QString name;
+  ChannelBlock* channelBlock;
+  QChar symbol;
   bool checked;
 
-  bool operator<(const Channel &other) const {
-    return name < other.name;
+  bool operator<(const ChannelItem &other) const {
+    return channelBlock->name < other.channelBlock->name;
   }
 
 private:
-  QVector<Channel> childItems;
-  QVariantList itemData; // letter, channelID, name, checked
-  Channel *_parentItem = nullptr;
+  QVector<ChannelItem> childItems;
+  ChannelItem *parent = nullptr;
 };
 
 #endif // CHANNELITEM_H
