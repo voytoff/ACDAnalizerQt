@@ -6,6 +6,7 @@
 #include <QMainWindow>
 #include <QTreeView>
 #include <QPromise>
+#include <QSplitter>
 
 class MainWindow : public QMainWindow
 {
@@ -22,21 +23,22 @@ protected:
   ACDObject *acdObject;
 
 private:
-  void createMenuBar();
+  void createControlBar();
   void createDashboard();
   void restoreLayout();
   void saveLayout();
   void createTree();
-  void adjustHeader();
   void selectChannel();
   void openACD(QPromise<ACDObject *> &promise, QStringList files);
 
   QTreeView *view;
   TreeModel *model;
+  QSplitter *splitter;
 
 public slots:
   void openExp();
   void closeExp();
+  void showTable();
 
 signals:
 };

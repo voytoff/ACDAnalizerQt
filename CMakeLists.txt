@@ -28,8 +28,12 @@ qt_add_executable(ACDAnalizer
     ${PROJECT_RESOURCES}
     treepaintdelegate.h treepaintdelegate.cpp
     treemodel.h treemodel.cpp
-    channelitem.h channelitem.cpp
+
     treeitem.h treeitem.cpp
+    parameterarray.h parameterarray.cpp
+    parametertable.h parametertable.cpp
+    tableview.h tableview.cpp
+    tablemodel.h tablemodel.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

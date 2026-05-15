@@ -1,64 +1,78 @@
 #include "treeitem.h"
 
-//! [0]
-TreeItem::TreeItem(QVariantList data, TreeItem *parent)
-  : m_itemData(std::move(data)), m_parentItem(parent)
-{}
-//! [0]
-
-//! [1]
-void TreeItem::appendChild(std::unique_ptr<TreeItem> &&child)
-{
-  m_childItems.push_back(std::move(child));
-}
-//! [1]
-
-//! [2]
-TreeItem *TreeItem::child(int row)
-{
-  return row >= 0 && row < childCount() ? m_childItems.at(row).get() : nullptr;
+TreeItem::TreeItem(QVariantList data, TreeItem *parent, ChannelBlock* channelBlock)
+  : itemData(std::move(data)), parent(parent), channelBlock(channelBlock) {
+  root = channelBlock == nullptr;
 }
 
-int TreeItem::childCount() const
-{
-  return int(m_childItems.size());
+void TreeItem::appendChild(std::unique_ptr<TreeItem> &&child) {
+  childItems.push_back(std::move(child));
 }
-//! [3]
 
-//! [4]
-int TreeItem::columnCount() const
-{
-  return 1;// int(m_itemData.count());
+TreeItem *TreeItem::child(int row) {
+  return row >= 0 && row < childCount() ? childItems.at(row).get() : nullptr;
 }
-//! [4]
 
-//! [5]
-QVariant TreeItem::data(int column) const
-{
-  return m_itemData.value(column);
+int TreeItem::childCount() const {
+  return int(childItems.size());
 }
-//! [5]
 
-//! [6]
-TreeItem *TreeItem::parentItem()
-{
-  return m_parentItem;
+int TreeItem::checkCount() const {
+  int count = 0;
+  std::for_each(childItems.cbegin(), childItems.cend(), [&count](const std::unique_ptr<TreeItem> &treeItem) {
+    if (treeItem->checked) ++count;
+  });
+  return count;
 }
-//! [6]
 
-//! [7]
-int TreeItem::row() const
-{
-  if (m_parentItem == nullptr)
+QVector<ChannelBlock*> TreeItem::channels() const {
+  if (!root) return {};
+  QVector<ChannelBlock*> items;
+  std::for_each(childItems.cbegin(), childItems.cend(), [&items](const std::unique_ptr<TreeItem> &treeItem) {
+    if (treeItem->checked)
+      items.append(treeItem.get()->channelBlock.get());
+  });
+  return items;
+}
+
+int TreeItem::columnCount() const {
+  return 1;
+}
+
+QVariant TreeItem::data(int column) const {
+  return itemData.value(column);
+}
+
+TreeItem *TreeItem::parentItem() {
+  return parent;
+}
+
+void TreeItem::toggle() {
+  if (channelBlock.get()) {
+    checked = !checked;
+  }
+}
+
+QVector<TreeItem*> TreeItem::childs() const {
+  if (!root) return {};
+  QVector<TreeItem*> dest;
+  for (const auto& ptr : childItems) {
+    if (ptr) dest.append(ptr.get());
+  }
+  return dest;
+}
+
+int TreeItem::row() const {
+  if (parent == nullptr)
     return 0;
-  const auto it = std::find_if(m_parentItem->m_childItems.cbegin(), m_parentItem->m_childItems.cend(),
-                               [this](const std::unique_ptr<TreeItem> &treeItem) {
-                                 return treeItem.get() == this;
-                               });
+  const auto it = std::find_if(
+    parent->childItems.cbegin(), parent->childItems.cend(),
+     [this](const std::unique_ptr<TreeItem> &treeItem) {
+       return treeItem.get() == this;
+    });
 
-  if (it != m_parentItem->m_childItems.cend())
-    return std::distance(m_parentItem->m_childItems.cbegin(), it);
+  if (it != parent->childItems.cend())
+    return std::distance(parent->childItems.cbegin(), it);
   Q_ASSERT(false); // should not happen
   return -1;
 }
-//! [7]
