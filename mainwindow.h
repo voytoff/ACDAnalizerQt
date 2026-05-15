@@ -29,11 +29,12 @@ private:
   void saveLayout();
   void createTree();
   void selectChannel();
-  void openACD(QPromise<ACDObject *> &promise, QStringList files);
+  void openACD(QPromise<ACDObject *> &promise, ACDObject* obj);
 
   QTreeView *view;
   TreeModel *model;
   QSplitter *splitter;
+  QWidget *empty = new QWidget();
 
 public slots:
   void openExp();
@@ -41,6 +42,8 @@ public slots:
   void showTable();
 
 signals:
+  void updateStatusBar(const QString &message);
+
 };
 
 #endif // MAINWINDOW_H

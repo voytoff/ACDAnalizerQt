@@ -1,4 +1,4 @@
-#include "TableModel.h"
+#include "tablemodel.h"
 #include <QDataStream>
 #include <QFile>
 #include <QJsonArray>
@@ -23,11 +23,12 @@ int TableModel::columnCount(const QModelIndex &parent) const {
 
 QVariant TableModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid()) return QVariant();
-  if (index.row() >= table->table.size() || index.row() < 0) return QVariant();
-  if (role != Qt::DisplayRole) return QVariant();
-  if (index.column() == 0) return table->table.at(index.row()).index;
+  else if (index.row() >= table->table.size() || index.row() < 0) return QVariant();
+  else if (role != Qt::DisplayRole) return QVariant();
+  else if (index.column() == 0) return table->table.at(index.row()).index;
   else if (index.column() == 1) return table->table.at(index.row()).time;
-  else return table->table.at(index.row()).values.at(index.column()-2);
+  else if (role == Qt::SizeHintRole) return QSize(0, 20);
+  else return table->table.at(index.row()).values.at(index.column() - 2);
 }
 
 QVariant TableModel::headerData(int section, Qt::Orientation orientation, int role) const {

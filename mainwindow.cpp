@@ -17,6 +17,7 @@
 #include <QSplitter>
 #include <QGroupBox>
 #include <QStatusBar>
+#include <QtConcurrent>
 #include <QtConcurrentTask>
 #include <QHeaderView>
 #include <QScreen>
@@ -25,13 +26,10 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow{parent}
 {
   QIcon::setThemeName("Material Symbols Outlined");
-  QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
+  QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
   this->setWindowIcon(QIcon::fromTheme(QIcon::ThemeIcon::NetworkWired));
   createControlBar();
-  createTree();
-  //adjustHeader();
   createDashboard();
-  statusBar()->setSizeGripEnabled(true);
   restoreLayout();
 /*
   QFile file(":/default.txt");
@@ -47,7 +45,7 @@ void MainWindow::createControlBar()
   QAction *openAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::FolderOpen), tr("Открыть..."), this);
   QAction *closeAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::WindowClose), tr("Закрыть..."), this);
   QAction *quitAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::SystemLogOut), tr("Выход"), this);
-  QAction *tableAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::DocumentProperties), tr("Таблица"), this);
+  QAction *tableAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::FormatJustifyLeft), tr("Таблица"), this);
 
   openAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
   quitAction->setShortcuts(QKeySequence::Quit);
@@ -73,11 +71,13 @@ void MainWindow::createControlBar()
 }
 
 void MainWindow::createDashboard() {
+  createTree();
+
   QGridLayout *layout = new QGridLayout;
-  QGroupBox *box = new QGroupBox("text");
+
   splitter = new QSplitter(this);
   splitter->addWidget(view);
-  splitter->addWidget(box);
+  splitter->addWidget(empty);
   layout->addWidget(splitter, 0, 0);
   //layout->addWidget(view, 0, 0);
   //layout->addWidget(controlBox, 0, 1);
@@ -85,6 +85,8 @@ void MainWindow::createDashboard() {
   QWidget *widget = new QWidget;
   widget->setLayout(layout);
   setCentralWidget(widget);
+
+  statusBar()->setSizeGripEnabled(true);
 }
 
 void MainWindow::openExp() {
@@ -98,23 +100,31 @@ void MainWindow::openExp() {
     &selectedFilter,
     options);
   if (!files.isEmpty() && files.length() > 0) {
-    auto future = QtConcurrent::task(
-      &MainWindow::openACD)
-      .withArguments(this, files)
-      .withPriority(5)
-      .spawn();
-    future.waitForFinished();
-    acdObject = future.result();
-    model = new TreeModel(acdObject);
-    view->setModel(model);
+    view->setModel(NULL);
+    splitter->replaceWidget(1, empty);
+    QFutureWatcher<ACDObject*> *watcher = new QFutureWatcher<ACDObject*>(this);
+    connect(watcher, &QFutureWatcher<ACDObject*>::finished, this, [this, watcher]() {
+      statusBar()->showMessage("Готово");
+      acdObject = watcher->result();
+      model = new TreeModel(acdObject);
+      view->setModel(model);
+    });
+    ACDObject* obj = new ACDObject(files);
+    connect(obj, &ACDObject::fileLoaded, this, [this](int index, QString fileName) {
+      statusBar()->showMessage(QString("%1: %2").arg(index).arg(fileName));
+    });
+    watcher->setFuture(
+      QtConcurrent::task(
+        &MainWindow::openACD)
+          .withArguments(this, obj)
+          .withPriority(5)
+          .spawn());
   }
 }
 
-void MainWindow::openACD(QPromise<ACDObject*> &promise, QStringList files) {
-  ACDObject* acdo = new ACDObject(files);
-  connect(acdo, &ACDObject::fileLoaded, this, [=](int index, QString fileName) { qDebug() << index << fileName; });
-  acdo->load();
-  promise.addResult(acdo);
+void MainWindow::openACD(QPromise<ACDObject*> &promise, ACDObject* obj) {
+  obj->load();
+  promise.addResult(obj);
 }
 
 void MainWindow::closeExp() {
@@ -157,6 +167,10 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   saveLayout();
   QMainWindow::closeEvent(event);
 }
+
+//void MainWindow::updateStatusBar(const QString &message) {
+//  statusBar()->showMessage(message);
+//}
 
 void MainWindow::showTable() {
   auto channels = model->channels();

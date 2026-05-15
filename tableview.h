@@ -1,15 +1,13 @@
 #ifndef TABLEVIEW_H
 #define TABLEVIEW_H
 
-#include "parametertable.h"
-#include <QTableView>
+#include <QTreeView>
 
-class TableView : public QTableView
+class TableView : public QTreeView
 {
   Q_OBJECT
 public:
   explicit TableView(QWidget *parent = nullptr);
-  const ParameterTable *table;
 
 signals:
 
