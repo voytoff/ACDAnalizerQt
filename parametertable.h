@@ -2,7 +2,7 @@
 #define PARAMETERTABLE_H
 
 #include "parameter.h"
-#include "parameterarray.h"
+#include "parameterrow.h"
 #include <QStringList>
 
 class ParameterTable
@@ -10,8 +10,10 @@ class ParameterTable
 public:
   ParameterTable();
   QStringList headers;
-  QList<ParameterArray> table;
-  void append(QString name, QVector<Parameter*> data);
+  QList<ParameterRow> table;
+  void createIndex(QVector<Parameter*> data);
+  void appendColumn(QString name, QVector<Parameter*> data);
+  void appendRow(Parameter* parameter);
 };
 
 #endif // PARAMETERTABLE_H

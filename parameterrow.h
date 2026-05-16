@@ -3,13 +3,12 @@
 
 #include <QDateTime>
 
-class ParameterArray
+class ParameterRow
 {
 public:
-  //ParameterArray();
-  ParameterArray(double index, QDateTime time, QVariantList values);
+  ParameterRow(double index, QDateTime time, QVariantList values);
 
-  bool operator<(const ParameterArray &other) const {
+  bool operator<(const ParameterRow &other) const {
     return time < other.time;
   }
 

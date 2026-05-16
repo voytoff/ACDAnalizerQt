@@ -34,7 +34,7 @@ private:
   QTreeView *view;
   TreeModel *model;
   QSplitter *splitter;
-  QWidget *empty = new QWidget();
+  QWidget *empty;
 
 public slots:
   void openExp();

@@ -3,6 +3,7 @@
 #include "tablemodel.h"
 #include "tableview.h"
 #include "treepaintdelegate.h"
+#include "channelblock.h"
 
 #include <QFileDialog>
 #include <QFlag>
@@ -23,8 +24,10 @@
 #include <QScreen>
 #include <QToolBar>
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow{parent}
-{
+MainWindow::MainWindow(QWidget *parent)
+  : QMainWindow{parent}
+  , acdObject(nullptr)
+  , empty(new QWidget()){
   QIcon::setThemeName("Material Symbols Outlined");
   QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
   this->setWindowIcon(QIcon::fromTheme(QIcon::ThemeIcon::NetworkWired));
@@ -45,7 +48,7 @@ void MainWindow::createControlBar()
   QAction *openAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::FolderOpen), tr("Открыть..."), this);
   QAction *closeAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::WindowClose), tr("Закрыть..."), this);
   QAction *quitAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::SystemLogOut), tr("Выход"), this);
-  QAction *tableAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::FormatJustifyLeft), tr("Таблица"), this);
+  QAction *tableAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::EditSelectAll), tr("Таблица"), this);
 
   openAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
   quitAction->setShortcuts(QKeySequence::Quit);
@@ -128,8 +131,10 @@ void MainWindow::openACD(QPromise<ACDObject*> &promise, ACDObject* obj) {
 }
 
 void MainWindow::closeExp() {
-  if (acdObject)
+  if (acdObject) {
     acdObject->close();
+    acdObject = nullptr;
+  }
 }
 
 void MainWindow::restoreLayout() {
@@ -173,11 +178,18 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 //}
 
 void MainWindow::showTable() {
+  splitter->replaceWidget(1, empty);
   auto channels = model->channels();
+  if (channels.count() == 0) return;
   ParameterTable* table = new ParameterTable();
-  foreach (ChannelBlock* channelBlock, model->channels()) {
+  // 1 находим параметр с максимальной частотой дискретизации И максимальным набором элементов
+  auto it = std::max_element(channels.begin(), channels.end(), [](ChannelBlock *a, ChannelBlock *b) {
+    return a->frequency() < b->frequency() && a->dataBlockArray->count() < b->dataBlockArray->count();
+  });
+  table->createIndex((*it)->data());
+  foreach (ChannelBlock* channelBlock, channels) {
     auto data = channelBlock->data();
-    table->append(channelBlock->name, data);
+    table->appendColumn(channelBlock->name, data);
   }
   auto model = new TableModel(table);
   auto view = new TableView();

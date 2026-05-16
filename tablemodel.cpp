@@ -24,6 +24,7 @@ int TableModel::columnCount(const QModelIndex &parent) const {
 QVariant TableModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid()) return QVariant();
   else if (index.row() >= table->table.size() || index.row() < 0) return QVariant();
+  else if (index.column() - 2 >= table->table.at(index.row()).values.size() || index.column() < 0) return QVariant();
   else if (role != Qt::DisplayRole) return QVariant();
   else if (index.column() == 0) return table->table.at(index.row()).index;
   else if (index.column() == 1) return table->table.at(index.row()).time;

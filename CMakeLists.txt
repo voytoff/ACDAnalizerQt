@@ -30,7 +30,7 @@ qt_add_executable(ACDAnalizer
     treemodel.h treemodel.cpp
 
     treeitem.h treeitem.cpp
-    parameterarray.h parameterarray.cpp
+    parameterrow.h parameterrow.cpp
     parametertable.h parametertable.cpp
     tableview.h tableview.cpp
     tablemodel.h tablemodel.cpp
