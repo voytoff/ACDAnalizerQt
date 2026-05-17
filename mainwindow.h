@@ -12,9 +12,6 @@ class MainWindow : public QMainWindow
 {
   Q_OBJECT
 public:
-  const QString Company = "NIIHM";
-  const QString AppName = "ACDAnalizer";
-
   explicit MainWindow(QWidget *parent = nullptr);
 
 protected:
@@ -40,6 +37,7 @@ public slots:
   void openExp();
   void closeExp();
   void showTable();
+  void doSettings();
 
 signals:
   void updateStatusBar(const QString &message);

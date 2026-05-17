@@ -1,0 +1,29 @@
+#include "settingsdlg.h"
+#include "ui_settingsdlg.h"
+
+SettingsDlg::SettingsDlg(QWidget *parent)
+  : QDialog(parent)
+  , ui(new Ui::SettingsDlg)
+  , settings() {
+  ui->setupUi(this);
+
+  ui->frequency->addItem("1", 1);
+  ui->frequency->addItem("10", 10);
+  ui->frequency->addItem("100", 100);
+
+  ui->frequency->setCurrentText(QString::number(settings.frequency()));
+
+  connect(this, &QDialog::finished, this, [this](int result) { accept(result); });
+
+  setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
+}
+
+SettingsDlg::~SettingsDlg() {
+  delete ui;
+}
+
+void SettingsDlg::accept(const int result) {
+  if (result == QDialog::Accepted) {
+    settings.setValue("frequency", ui->frequency->currentData());
+  }
+}

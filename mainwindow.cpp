@@ -4,6 +4,7 @@
 #include "tableview.h"
 #include "treepaintdelegate.h"
 #include "channelblock.h"
+#include "settingsdlg.h"
 
 #include <QFileDialog>
 #include <QFlag>
@@ -49,6 +50,7 @@ void MainWindow::createControlBar()
   QAction *closeAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::WindowClose), tr("Закрыть..."), this);
   QAction *quitAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::SystemLogOut), tr("Выход"), this);
   QAction *tableAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::EditSelectAll), tr("Таблица"), this);
+  QAction *settingsAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::ViewRestore), tr("Установки..."), this);
 
   openAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
   quitAction->setShortcuts(QKeySequence::Quit);
@@ -57,6 +59,7 @@ void MainWindow::createControlBar()
   connect(closeAction, &QAction::triggered, this, &MainWindow::closeExp);
   connect(quitAction, &QAction::triggered, this, &MainWindow::close);
   connect(tableAction, &QAction::triggered, this, &MainWindow::showTable);
+  connect(settingsAction, &QAction::triggered, this, &MainWindow::doSettings);
 
   QMenu *fileMenu = menuBar()->addMenu(tr("Файл"));
   fileMenu->addAction(openAction);
@@ -65,7 +68,10 @@ void MainWindow::createControlBar()
   fileMenu->addSeparator();
   fileMenu->addAction(quitAction);
 
-  menuBar()->setNativeMenuBar(false);
+  QMenu *tootMenu = menuBar()->addMenu(tr("Инструменты"));
+  tootMenu->addAction(settingsAction);
+
+  //menuBar()->setNativeMenuBar(false);
 
   auto toolbar = addToolBar("Главный");
   toolbar->addAction(openAction);
@@ -138,13 +144,13 @@ void MainWindow::closeExp() {
 }
 
 void MainWindow::restoreLayout() {
-  QSettings settings(Company, AppName);
+  Settings settings;
   restoreGeometry(settings.value("geometry").toByteArray());
   restoreState(settings.value("windowState").toByteArray());
 }
 
 void MainWindow::saveLayout() {
-  QSettings settings(Company, AppName);
+  Settings settings;
   settings.setValue("geometry", saveGeometry());
   settings.setValue("windowState", saveState());
 }
@@ -195,4 +201,13 @@ void MainWindow::showTable() {
   auto view = new TableView();
   view->setModel(model);
   splitter->replaceWidget(1, view);
+}
+
+void MainWindow::doSettings()
+{
+  SettingsDlg *dialog = new SettingsDlg(this);
+  int accepted = dialog->exec();
+  if (accepted == QDialog::Accepted) {
+    //model->replace(index.row(), sensor);
+  }
 }

@@ -34,6 +34,8 @@ qt_add_executable(ACDAnalizer
     parametertable.h parametertable.cpp
     tableview.h tableview.cpp
     tablemodel.h tablemodel.cpp
+    settingsdlg.h settingsdlg.cpp settingsdlg.ui
+    settings.h settings.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
