@@ -24,11 +24,13 @@
 #include <QHeaderView>
 #include <QScreen>
 #include <QToolBar>
+#include <QComboBox>
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow{parent}
   , acdObject(nullptr)
-  , empty(new QWidget()){
+  , empty(new QWidget())
+  , settings(new Settings()) {
   QIcon::setThemeName("Material Symbols Outlined");
   QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
   this->setWindowIcon(QIcon::fromTheme(QIcon::ThemeIcon::NetworkWired));
@@ -68,15 +70,28 @@ void MainWindow::createControlBar()
   fileMenu->addSeparator();
   fileMenu->addAction(quitAction);
 
-  QMenu *tootMenu = menuBar()->addMenu(tr("Инструменты"));
-  tootMenu->addAction(settingsAction);
+  QMenu *toolMenu = menuBar()->addMenu(tr("Инструменты"));
+  toolMenu->addAction(settingsAction);
 
-  //menuBar()->setNativeMenuBar(false);
 
   auto toolbar = addToolBar("Главный");
   toolbar->addAction(openAction);
   toolbar->addAction(tableAction);
 
+  QComboBox* frequency = new QComboBox(this);
+  frequency->addItem("1", 1);
+  frequency->addItem("10", 10);
+  frequency->addItem("100", 100);
+  frequency->setCurrentText(QString::number(settings->frequency()));
+  connect(frequency, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, frequency]() {
+    settings->frequency(frequency->currentData());
+  });
+  connect(settings, &Settings::frequencyChanged, this, [frequency](int value) {
+    frequency->setCurrentText(QString::number(value));
+  });
+
+  toolbar->addSeparator();
+  toolbar->addWidget(frequency);
 }
 
 void MainWindow::createDashboard() {
@@ -145,14 +160,14 @@ void MainWindow::closeExp() {
 
 void MainWindow::restoreLayout() {
   Settings settings;
-  restoreGeometry(settings.value("geometry").toByteArray());
-  restoreState(settings.value("windowState").toByteArray());
+  restoreGeometry(settings.geometry());
+  restoreState(settings.windowState());
 }
 
 void MainWindow::saveLayout() {
   Settings settings;
-  settings.setValue("geometry", saveGeometry());
-  settings.setValue("windowState", saveState());
+  settings.geometry(saveGeometry());
+  settings.windowState(saveState());
 }
 
 void MainWindow::createTree() {
@@ -179,10 +194,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   QMainWindow::closeEvent(event);
 }
 
-//void MainWindow::updateStatusBar(const QString &message) {
-//  statusBar()->showMessage(message);
-//}
-
 void MainWindow::showTable() {
   splitter->replaceWidget(1, empty);
   auto channels = model->channels();
@@ -205,7 +216,7 @@ void MainWindow::showTable() {
 
 void MainWindow::doSettings()
 {
-  SettingsDlg *dialog = new SettingsDlg(this);
+  SettingsDlg *dialog = new SettingsDlg(settings, this);
   int accepted = dialog->exec();
   if (accepted == QDialog::Accepted) {
     //model->replace(index.row(), sensor);

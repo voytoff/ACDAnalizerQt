@@ -14,9 +14,13 @@ public:
   explicit Settings();
 
 public slots:
-  int frequency(int value = 0);
+  int frequency(QVariant value = 0);
+  QByteArray geometry(QByteArray value = QByteArray());
+  QByteArray windowState(QByteArray value = QByteArray());
 
 signals:
+  void frequencyChanged(int value);
+
 };
 
 #endif // SETTINGS_H

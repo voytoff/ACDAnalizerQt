@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "acdobject.h"
+#include "settings.h"
 #include "treemodel.h"
 #include <QMainWindow>
 #include <QTreeView>
@@ -18,6 +19,7 @@ protected:
   void closeEvent(QCloseEvent *event) override;
 
   ACDObject *acdObject;
+  Settings* settings;
 
 private:
   void createControlBar();
@@ -27,6 +29,7 @@ private:
   void createTree();
   void selectChannel();
   void openACD(QPromise<ACDObject *> &promise, ACDObject* obj);
+  void frequencyChanged(int index);
 
   QTreeView *view;
   TreeModel *model;
