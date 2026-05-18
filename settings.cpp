@@ -8,7 +8,16 @@ int Settings::frequency(QVariant value) {
     this->setValue("frequency", value);
     emit propertyChanged("frequency", this->value("frequency"));
   }
-  return this->value("frequency").toInt();
+  auto result = this->value("frequency").toInt();
+  return result == 0 ? 10 : result;
+}
+AxisXType Settings::axisXType(QVariant value) {
+  if (value.isValid() && value.toInt() > 0) {
+    this->setValue("axisXType", value);
+    emit propertyChanged("axisXType", this->value("axisXType"));
+  }
+  auto result = this->value("axisXType").toInt();
+  return result == 0 ? AxisXType::Index : (AxisXType)this->value("axisXType").toInt();
 }
 
 QByteArray Settings::geometry(QByteArray value) {

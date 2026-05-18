@@ -7,8 +7,6 @@
 #include <QList>
 #include <QMessageBox>
 
-//TableModel::TableModel(QObject *parent): QAbstractTableModel(parent) {}
-
 TableModel::TableModel(const ParameterTable *table, QObject *parent)
   : QAbstractTableModel(parent)
   , table(table) {}
@@ -35,7 +33,7 @@ QVariant TableModel::data(const QModelIndex &index, int role) const {
 QVariant TableModel::headerData(int section, Qt::Orientation orientation, int role) const {
   if (role != Qt::DisplayRole) return QVariant();
   if (orientation != Qt::Horizontal) return QVariant();
-  if (section >= table->headers.size()) return {};
+  if (section >= table->headers.size()) return QVariant();
   return table->headers.at(section);
 }
 

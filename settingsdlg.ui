@@ -20,7 +20,7 @@
       <number>20</number>
      </property>
      <item row="0" column="0">
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="label1">
        <property name="text">
         <string>Частота опроса</string>
        </property>
@@ -28,6 +28,16 @@
      </item>
      <item row="0" column="1">
       <widget class="QComboBox" name="frequency"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label2">
+       <property name="text">
+        <string>Аргумент шкалы X</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="axisXType"/>
      </item>
     </layout>
    </item>

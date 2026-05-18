@@ -1,6 +1,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include "ACD2File_global.h"
 #include <QSettings>
 const QString Company = "NIIHM";
 const QString AppName = "ACDAnalizer";
@@ -15,6 +16,7 @@ public:
 
 public slots:
   int frequency(QVariant value = 0);
+  AxisXType axisXType(QVariant value = 0);
   QByteArray geometry(QByteArray value = QByteArray());
   QByteArray windowState(QByteArray value = QByteArray());
 

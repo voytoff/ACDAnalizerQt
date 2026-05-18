@@ -18,14 +18,14 @@ protected:
   virtual bool doLoad();
   void resizeEvent(QResizeEvent *) override;
   void createDefaultChartView(QChart *chart);
-  QChartView *defaultChartView() const { return m_defaultChartView; }
+  QChartView *defaultChartView() const { return _defaultChartView; }
   void setDefaultChartView(QChartView *view);
 
   QString m_loadError;
 
 private:
-  QChartView *m_defaultChartView = nullptr;
-  bool m_loaded = false;
+  QChartView *_defaultChartView = nullptr;
+  bool loaded = false;
 };
 
 #endif

@@ -20,9 +20,6 @@ void ParameterTable::appendColumn(DataBlockArray array) {
   foreach (Parameter parameter, array) {
     if (index >= table.length())
       table.append(ParameterRow(parameter.index, parameter.time, {}));
-    //auto row = table[index].values;
-    //if (row.length() == 0)
-    //  row.append({parameter.index, parameter.time});
     table[index++].values.append(parameter.value);
   }
 }

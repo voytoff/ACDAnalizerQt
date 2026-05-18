@@ -1,3 +1,4 @@
+#include "ACD2File_global.h"
 #include "mainwindow.h"
 #include "modeldatawidget.h"
 #include "parametertable.h"
@@ -38,17 +39,9 @@ MainWindow::MainWindow(QWidget *parent)
   createControlBar();
   createDashboard();
   restoreLayout();
-/*
-  QFile file(":/default.txt");
-  file.open(QIODevice::ReadOnly | QIODevice::Text);
-  model = new TreeModel(QString::fromUtf8(file.readAll()));
-  file.close();
-  view->setModel(model);
-*/
 }
 
-void MainWindow::createControlBar()
-{
+void MainWindow::createControlBar() {
   QAction *openAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::FolderOpen), tr("Открыть..."), this);
   QAction *closeAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::WindowClose), tr("Закрыть..."), this);
   QAction *quitAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::SystemLogOut), tr("Выход"), this);
@@ -74,6 +67,9 @@ void MainWindow::createControlBar()
   fileMenu->addAction(quitAction);
 
   QMenu *toolMenu = menuBar()->addMenu(tr("Инструменты"));
+  toolMenu->addAction(tableAction);
+  toolMenu->addAction(chartAction);
+  toolMenu->addSeparator();
   toolMenu->addAction(settingsAction);
 
 
@@ -94,9 +90,23 @@ void MainWindow::createControlBar()
     if (name == "frequency" && value.isValid())
       frequency->setCurrentText(QString::number(value.toInt()));
   });
-
   toolbar->addSeparator();
   toolbar->addWidget(frequency);
+
+  QComboBox* axisXcombo = new QComboBox(this);
+  axisXcombo->addItem("Индекс", AxisXType::Index);
+  axisXcombo->addItem("Время", AxisXType::Time);
+  axisXcombo->setCurrentIndex(settings->axisXType()-1);
+  connect(axisXcombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, axisXcombo]() {
+    settings->axisXType(axisXcombo->currentData());
+  });
+  connect(settings, &Settings::propertyChanged, this, [axisXcombo](QString name, QVariant value) {
+    if (name == "axisXType" && value.isValid())
+      axisXcombo->setCurrentIndex(value.toInt()-1);
+  });
+
+  toolbar->addSeparator();
+  toolbar->addWidget(axisXcombo);
 }
 
 void MainWindow::createDashboard() {
@@ -198,8 +208,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   QMainWindow::closeEvent(event);
 }
 
-ParameterTable *MainWindow::getTable()
-{
+ParameterTable *MainWindow::getTable() {
   if (!acdObject) {
     QApplication::beep();
     return nullptr;
@@ -219,17 +228,6 @@ ParameterTable *MainWindow::getTable()
 }
 
 void MainWindow::showTable() {
-  /*
-  // 1 находим параметр с максимальной частотой дискретизации И максимальным набором элементов
-  auto it = std::max_element(channels.begin(), channels.end(), [](ChannelBlock *a, ChannelBlock *b) {
-    return a->frequency() < b->frequency() && a->dataBlockArray->count() < b->dataBlockArray->count();
-  });
-  table->createIndex((*it)->data());
-  foreach (ChannelBlock* channelBlock, channels) {
-    auto data = channelBlock->data();
-    table->appendColumn(channelBlock->name, data);
-  }
-*/
   ParameterTable* table = getTable();
   if (!table) return;
   TableModel* model = new TableModel(table);
@@ -238,18 +236,16 @@ void MainWindow::showTable() {
   splitter->replaceWidget(1, view);
 }
 
-void MainWindow::showChart()
-{
+void MainWindow::showChart() {
   ParameterTable* table = getTable();
   if (!table) return;
   TableModel* model = new TableModel(table);
 
-  ModelDataWidget* view = new ModelDataWidget(model);
+  ModelDataWidget* view = new ModelDataWidget(model, settings->axisXType());
   splitter->replaceWidget(1, view);
 }
 
-void MainWindow::doSettings()
-{
+void MainWindow::doSettings() {
   SettingsDlg *dialog = new SettingsDlg(settings, this);
   int accepted = dialog->exec();
   if (accepted == QDialog::Accepted) {

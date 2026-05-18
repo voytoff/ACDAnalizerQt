@@ -13,7 +13,7 @@ ContentWidget::ContentWidget(QWidget *parent)
 
 void ContentWidget::load()
 {
-  if (m_loaded || layout())
+  if (loaded || layout())
     return;
 
   if (!doLoad()) {
@@ -28,7 +28,7 @@ void ContentWidget::load()
     setLayout(errorLayout);
   }
 
-  m_loaded = true;
+  loaded = true;
 }
 
 bool ContentWidget::doLoad()
@@ -40,20 +40,20 @@ bool ContentWidget::doLoad()
 
 void ContentWidget::resizeEvent(QResizeEvent *)
 {
-  if (m_defaultChartView)
-    m_defaultChartView->resize(size());
+  if (_defaultChartView)
+    _defaultChartView->resize(size());
 }
 
 // Most examples are simple and need only basic chart view widget, so provide it in this base class
 // to avoid duplicating code
 void ContentWidget::createDefaultChartView(QChart *chart)
 {
-  m_defaultChartView = new QChartView(chart, this);
-  m_defaultChartView->setRenderHint(QPainter::Antialiasing);
+  _defaultChartView = new QChartView(chart, this);
+  _defaultChartView->setRenderHint(QPainter::Antialiasing);
 }
 
 void ContentWidget::setDefaultChartView(QChartView *view)
 {
-  m_defaultChartView = view;
-  m_defaultChartView->setRenderHint(QPainter::Antialiasing);
+  _defaultChartView = view;
+  _defaultChartView->setRenderHint(QPainter::Antialiasing);
 }
