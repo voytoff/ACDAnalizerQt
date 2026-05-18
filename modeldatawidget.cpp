@@ -18,8 +18,8 @@ ModelDataWidget::ModelDataWidget(TableModel* model, AxisXType axisXType, QWidget
   chart->setAnimationOptions(QChart::AllAnimations);
   //auto axisY = createAxisY();
   //chart->addAxis(axisY, Qt::AlignLeft);
-  //auto axisX = createAxisX(axisXType);
-  //chart->addAxis(axisX, Qt::AlignBottom);
+  auto axisX = createAxisX(axisXType);
+  chart->addAxis(axisX, Qt::AlignBottom);
 
   for (int n = 2; n < model->columnCount(); n++) {
     auto series = new QLineSeries;
@@ -36,11 +36,15 @@ ModelDataWidget::ModelDataWidget(TableModel* model, AxisXType axisXType, QWidget
     seriesColorHex = "#" + QString::number(series->pen().color().rgb(), 16).right(6).toUpper();
     model->addMapping(seriesColorHex, QRect((n-2)*2, 0, 2, model->rowCount()));
 
-    //series->attachAxis(axisX);
-    //series->attachAxis(axisY);
+    auto axisY = createAxisY();
+    chart->addAxis(axisY, Qt::AlignLeft);
+    //auto axisX = createAxisX(axisXType);
+    //chart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+    series->attachAxis(axisY);
   }
 
-  chart->createDefaultAxes();
+  //chart->createDefaultAxes();
   chart->layout()->setContentsMargins(0, 0, 0, 0);
   auto chartView = new QChartView(chart, this);
   chartView->setRenderHint(QPainter::Antialiasing);
@@ -70,7 +74,7 @@ QAbstractAxis *ModelDataWidget::createAxisX(AxisXType axisXType, QString *title)
 
 QAbstractAxis* ModelDataWidget::createAxisY(QString* title) {
   auto axisY = new QValueAxis;
-  axisY->setLabelFormat("%i");
+  axisY->setLabelFormat("%.4f");
   if (title) axisY->setTitleText(*title);
   return axisY;
 }
