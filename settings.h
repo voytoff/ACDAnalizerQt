@@ -19,7 +19,7 @@ public slots:
   QByteArray windowState(QByteArray value = QByteArray());
 
 signals:
-  void frequencyChanged(int value);
+  void propertyChanged(QString name, QVariant value);
 
 };
 

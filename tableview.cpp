@@ -1,4 +1,5 @@
 #include "tableview.h"
+#include "datestyledelegate.h"
 #include <QHeaderView>
 
 TableView::TableView(QWidget *parent) : QTreeView{parent} {
@@ -13,6 +14,8 @@ TableView::TableView(QWidget *parent) : QTreeView{parent} {
   this->setHorizontalScrollMode(QAbstractItemView::ScrollMode::ScrollPerPixel);
   this->setSortingEnabled(true);
   this->setRootIsDecorated(false);
+
+  this->setItemDelegateForColumn(1, new DateStyleDelegate(this));
 
   QLocale locale = this->locale();
   locale.setNumberOptions(QLocale::OmitGroupSeparator);

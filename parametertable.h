@@ -1,6 +1,7 @@
 #ifndef PARAMETERTABLE_H
 #define PARAMETERTABLE_H
 
+#include "datablockarray.h"
 #include "parameter.h"
 #include "parameterrow.h"
 #include <QStringList>
@@ -12,8 +13,9 @@ public:
   QStringList headers;
   QList<ParameterRow> table;
   void createIndex(QVector<Parameter*> data);
-  void appendColumn(QString name, QVector<Parameter*> data);
   void appendRow(Parameter* parameter);
+  void appendColumn(QString name, QVector<Parameter*> data);
+  void appendColumn(DataBlockArray array);
 };
 
 #endif // PARAMETERTABLE_H

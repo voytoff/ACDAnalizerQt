@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "acdobject.h"
+#include "parametertable.h"
 #include "settings.h"
 #include "treemodel.h"
 #include <QMainWindow>
@@ -30,6 +31,7 @@ private:
   void selectChannel();
   void openACD(QPromise<ACDObject *> &promise, ACDObject* obj);
   void frequencyChanged(int index);
+  ParameterTable* getTable();
 
   QTreeView *view;
   TreeModel *model;
@@ -40,6 +42,7 @@ public slots:
   void openExp();
   void closeExp();
   void showTable();
+  void showChart();
   void doSettings();
 
 signals:

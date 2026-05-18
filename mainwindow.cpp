@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "modeldatawidget.h"
 #include "parametertable.h"
 #include "tablemodel.h"
 #include "tableview.h"
@@ -53,6 +54,7 @@ void MainWindow::createControlBar()
   QAction *quitAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::SystemLogOut), tr("Выход"), this);
   QAction *tableAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::EditSelectAll), tr("Таблица"), this);
   QAction *settingsAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::ViewRestore), tr("Установки..."), this);
+  QAction *chartAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::ViewFullscreen), tr("График"), this);
 
   openAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
   quitAction->setShortcuts(QKeySequence::Quit);
@@ -62,6 +64,7 @@ void MainWindow::createControlBar()
   connect(quitAction, &QAction::triggered, this, &MainWindow::close);
   connect(tableAction, &QAction::triggered, this, &MainWindow::showTable);
   connect(settingsAction, &QAction::triggered, this, &MainWindow::doSettings);
+  connect(chartAction, &QAction::triggered, this, &MainWindow::showChart);
 
   QMenu *fileMenu = menuBar()->addMenu(tr("Файл"));
   fileMenu->addAction(openAction);
@@ -77,6 +80,7 @@ void MainWindow::createControlBar()
   auto toolbar = addToolBar("Главный");
   toolbar->addAction(openAction);
   toolbar->addAction(tableAction);
+  toolbar->addAction(chartAction);
 
   QComboBox* frequency = new QComboBox(this);
   frequency->addItem("1", 1);
@@ -86,8 +90,9 @@ void MainWindow::createControlBar()
   connect(frequency, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, frequency]() {
     settings->frequency(frequency->currentData());
   });
-  connect(settings, &Settings::frequencyChanged, this, [frequency](int value) {
-    frequency->setCurrentText(QString::number(value));
+  connect(settings, &Settings::propertyChanged, this, [frequency](QString name, QVariant value) {
+    if (name == "frequency" && value.isValid())
+      frequency->setCurrentText(QString::number(value.toInt()));
   });
 
   toolbar->addSeparator();
@@ -97,14 +102,13 @@ void MainWindow::createControlBar()
 void MainWindow::createDashboard() {
   createTree();
 
-  QGridLayout *layout = new QGridLayout;
+  QGridLayout *layout = new QGridLayout();
+  layout->setContentsMargins(2, 0, 2, 0);
 
   splitter = new QSplitter(this);
   splitter->addWidget(view);
   splitter->addWidget(empty);
   layout->addWidget(splitter, 0, 0);
-  //layout->addWidget(view, 0, 0);
-  //layout->addWidget(controlBox, 0, 1);
 
   QWidget *widget = new QWidget;
   widget->setLayout(layout);
@@ -194,11 +198,28 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   QMainWindow::closeEvent(event);
 }
 
-void MainWindow::showTable() {
+ParameterTable *MainWindow::getTable()
+{
+  if (!acdObject) {
+    QApplication::beep();
+    return nullptr;
+  }
   splitter->replaceWidget(1, empty);
   auto channels = model->channels();
-  if (channels.count() == 0) return;
+  if (channels.count() == 0) {
+    QApplication::beep();
+    return nullptr;
+  }
   ParameterTable* table = new ParameterTable();
+  foreach (ChannelBlock* channelBlock, channels) {
+    auto array = channelBlock->array(settings->frequency());
+    table->appendColumn(*array);
+  }
+  return table;
+}
+
+void MainWindow::showTable() {
+  /*
   // 1 находим параметр с максимальной частотой дискретизации И максимальным набором элементов
   auto it = std::max_element(channels.begin(), channels.end(), [](ChannelBlock *a, ChannelBlock *b) {
     return a->frequency() < b->frequency() && a->dataBlockArray->count() < b->dataBlockArray->count();
@@ -208,9 +229,22 @@ void MainWindow::showTable() {
     auto data = channelBlock->data();
     table->appendColumn(channelBlock->name, data);
   }
-  auto model = new TableModel(table);
-  auto view = new TableView();
+*/
+  ParameterTable* table = getTable();
+  if (!table) return;
+  TableModel* model = new TableModel(table);
+  TableView* view = new TableView();
   view->setModel(model);
+  splitter->replaceWidget(1, view);
+}
+
+void MainWindow::showChart()
+{
+  ParameterTable* table = getTable();
+  if (!table) return;
+  TableModel* model = new TableModel(table);
+
+  ModelDataWidget* view = new ModelDataWidget(model);
   splitter->replaceWidget(1, view);
 }
 

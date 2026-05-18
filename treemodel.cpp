@@ -10,6 +10,7 @@ using namespace Qt::StringLiterals;
 
 TreeModel::TreeModel(const QString &data, QObject *parent)
   : QAbstractItemModel(parent)
+  , acdObject(nullptr)
   , rootItem(std::make_unique<TreeItem>(QVariantList{tr("Имя канала"), tr("Summary")})) {
   setupModelData(QStringView{data}.split(u'\n'), rootItem.get());
 }

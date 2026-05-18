@@ -7,15 +7,17 @@
 class TableModel : public QAbstractTableModel {
   Q_OBJECT
 public:
-  TableModel(const ParameterTable *table, QObject *parent = nullptr);
+  explicit TableModel(const ParameterTable *table = nullptr, QObject *parent = nullptr);
 
-  int rowCount(const QModelIndex &parent) const override;
-  int columnCount(const QModelIndex &parent) const override;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const override;
   QVariant data(const QModelIndex &index, int role) const override;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+  void addMapping(const QString &color, const QRect &area);
 
 private:
   const ParameterTable *table;
+  QMultiHash<QString, QRect> mapping;
 };
 
 #endif // TABLEMODEL_H

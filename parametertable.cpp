@@ -1,4 +1,5 @@
 #include "parametertable.h"
+#include "datablockarray.h"
 
 ParameterTable::ParameterTable(): headers{"Индекс","Время"} {}
 
@@ -11,6 +12,19 @@ void ParameterTable::appendColumn(QString name, QVector<Parameter*> data) {
   headers.append(name);
   foreach (Parameter* parameter, data)
     appendRow(parameter);
+}
+
+void ParameterTable::appendColumn(DataBlockArray array) {
+  headers.append(array.name);
+  int index = 0;
+  foreach (Parameter parameter, array) {
+    if (index >= table.length())
+      table.append(ParameterRow(parameter.index, parameter.time, {}));
+    //auto row = table[index].values;
+    //if (row.length() == 0)
+    //  row.append({parameter.index, parameter.time});
+    table[index++].values.append(parameter.value);
+  }
 }
 
 void ParameterTable::appendRow(Parameter *parameter) {

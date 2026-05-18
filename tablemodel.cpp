@@ -9,9 +9,9 @@
 
 //TableModel::TableModel(QObject *parent): QAbstractTableModel(parent) {}
 
-TableModel::TableModel(const ParameterTable *table, QObject *parent) : QAbstractTableModel(parent) {
-  this->table = table;
-}
+TableModel::TableModel(const ParameterTable *table, QObject *parent)
+  : QAbstractTableModel(parent)
+  , table(table) {}
 
 int TableModel::rowCount(const QModelIndex &parent) const {
   return parent.isValid() ? 0 : table->table.size();
@@ -37,4 +37,8 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
   if (orientation != Qt::Horizontal) return QVariant();
   if (section >= table->headers.size()) return {};
   return table->headers.at(section);
+}
+
+void TableModel::addMapping(const QString &color, const QRect &area) {
+  mapping.insert(color, area);
 }

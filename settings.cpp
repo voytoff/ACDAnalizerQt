@@ -4,11 +4,9 @@
 Settings::Settings() : QSettings(Company, AppName) {}
 
 int Settings::frequency(QVariant value) {
-  auto frequency = value.toInt();
-  if (frequency > 0) {
-    this->setValue("geometry", frequency);
-    /*emit*/ frequencyChanged(frequency);
-    qDebug() << "frequencyChanged" << frequency;
+  if (value.isValid() && value.toInt() > 0) {
+    this->setValue("frequency", value);
+    emit propertyChanged("frequency", this->value("frequency"));
   }
   return this->value("frequency").toInt();
 }
