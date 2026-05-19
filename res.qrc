@@ -9,5 +9,7 @@
         <file>images/calc.svg</file>
         <file>images/wait.svg</file>
         <file>images/about.svg</file>
+        <file>images/dark.svg</file>
+        <file>images/light.svg</file>
     </qresource>
 </RCC>

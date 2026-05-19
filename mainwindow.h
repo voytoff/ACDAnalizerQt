@@ -40,6 +40,7 @@ private:
   void frequencyChanged(int index);
   ParameterTable* getTable();
   void about();
+  int addTab(QWidget *widget, const QString &name);
 
   QTreeView *view;
   TreeModel *model;

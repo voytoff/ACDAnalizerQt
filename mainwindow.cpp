@@ -57,8 +57,12 @@ void MainWindow::createControlBar() {
   QAction *chartAction = new QAction(getIcon(":/images/chart.svg"), tr("График"), this);
   QAction *settingsAction = new QAction(getIcon(":/images/settings.svg"), tr("Установки..."), this);
   QAction *aboutAction = new QAction(getIcon(":/images/about.svg"), tr("&О программе..."), this);
+  QAction *lightAction = new QAction(getIcon(":/images/light.svg"), tr("Дневной режим"), this);
+  QAction *darkAction = new QAction(getIcon(":/images/dark.svg"), tr("Ночной режим"), this);
 
   openAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
+  tableAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_T));
+  chartAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_U));
   quitAction->setShortcuts(QKeySequence::Quit);
 
   connect(openAction, &QAction::triggered, this, &MainWindow::openExp);
@@ -68,6 +72,12 @@ void MainWindow::createControlBar() {
   connect(settingsAction, &QAction::triggered, this, &MainWindow::doSettings);
   connect(chartAction, &QAction::triggered, this, &MainWindow::showChart);
   connect(aboutAction, &QAction::triggered, this, &MainWindow::about);
+  connect(lightAction, &QAction::triggered, this, [this](){
+    QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
+  });
+  connect(darkAction, &QAction::triggered, this, [this](){
+    QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
+  });
 
   QMenu *fileMenu = menuBar()->addMenu(tr("Файл"));
   fileMenu->addAction(openAction);
@@ -75,6 +85,10 @@ void MainWindow::createControlBar() {
   fileMenu->addAction(closeAction);
   fileMenu->addSeparator();
   fileMenu->addAction(quitAction);
+
+  QMenu *viewMenu = menuBar()->addMenu(tr("Вид"));
+  viewMenu->addAction(lightAction);
+  viewMenu->addAction(darkAction);
 
   QMenu *toolMenu = menuBar()->addMenu(tr("Инструменты"));
   toolMenu->addAction(tableAction);
@@ -124,9 +138,9 @@ void MainWindow::createControlBar() {
   toolbar->addSeparator();
   toolbar->addWidget(axisXcombo);
 
-  //progressBar->setRange(0, 100);
-  progressBar->setMaximum(0);
-  progressBar->setMinimum(0);
+  progressBar->setRange(0, 0);
+  //progressBar->setMaximum(0);
+  //progressBar->setMinimum(0);
   progressBar->setValue(0);
   progressBar->setTextVisible(true);
   statusBar()->addPermanentWidget(progressBar);
@@ -235,6 +249,7 @@ void MainWindow::createTree() {
   locale.setNumberOptions(QLocale::OmitGroupSeparator);
   view->setLocale(locale);
   view->setItemDelegate(new TreePaintDelegate());
+  view->setSelectionMode(QAbstractItemView::NoSelection);
 }
 
 void MainWindow::selectChannel() {
@@ -305,15 +320,21 @@ ParameterTable *MainWindow::getTable() {
   return table;
 }
 
+int MainWindow::addTab(QWidget *widget, const QString &name) {
+  int index = tabWidget->addTab(widget, name);
+  tabWidget->setCurrentIndex(index);
+  return index;
+}
+
 void MainWindow::showTable() {
   ParameterTable* table = getTable();
   if (!table) return;
   TableModel* model = new TableModel(table);
   TableView* view = new TableView();
   view->setModel(model);
+  view->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
   ///splitter->replaceWidget(1, view);
-  int index = tabWidget->addTab(view, table->headers.at(2));
-  tabWidget->setCurrentIndex(index);
+  addTab(view, table->headers.at(2));
 }
 
 void MainWindow::showChart() {
@@ -323,15 +344,13 @@ void MainWindow::showChart() {
 
   ModelDataWidget* view = new ModelDataWidget(model, settings->axisXType());
   ///splitter->replaceWidget(1, view);
-  int index = tabWidget->addTab(view, table->headers.at(2));
-  tabWidget->setCurrentIndex(index);
+  addTab(view, table->headers.at(2));
 }
 
 void MainWindow::doSettings() {
   SettingsDlg *dialog = new SettingsDlg(settings, this);
   int accepted = dialog->exec();
-  if (accepted == QDialog::Accepted) {
-  }
+  if (accepted == QDialog::Accepted) {}
 }
 
 
