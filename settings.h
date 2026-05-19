@@ -19,6 +19,7 @@ public slots:
   AxisXType axisXType(QVariant value = 0);
   QByteArray geometry(QByteArray value = QByteArray());
   QByteArray windowState(QByteArray value = QByteArray());
+  QByteArray splitter(QByteArray value = 0);
 
 signals:
   void propertyChanged(QString name, QVariant value);

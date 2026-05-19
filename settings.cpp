@@ -31,3 +31,9 @@ QByteArray Settings::windowState(QByteArray value) {
     this->setValue("windowState", value);
   return this->value("windowState").toByteArray();
 }
+
+QByteArray Settings::splitter(QByteArray value) {
+  if (!value.isEmpty())
+    this->setValue("splitter", value);
+  return this->value("splitter").toByteArray();
+}

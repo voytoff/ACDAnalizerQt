@@ -9,7 +9,6 @@ find_package(Qt6 REQUIRED COMPONENTS
     Quick
     Core
     Widgets
-    #LinguistTools
     Svg
     Gui
     Concurrent
@@ -23,8 +22,11 @@ qt_standard_project_setup()
 set(RESOURCE_FILES res.qrc)
 qt6_add_resources(PROJECT_RESOURCES ${RESOURCE_FILES})
 
+set(APP_ICON_RESOURCE_WINDOWS "appicon.rc")
+
 qt_add_executable(ACDAnalizer
     ${PROJECT_RESOURCES}
+    ${APP_ICON_RESOURCE_WINDOWS}
     main.cpp
     mainwindow.h mainwindow.cpp
     treepaintdelegate.h treepaintdelegate.cpp
@@ -54,10 +56,11 @@ set_target_properties(ACDAnalizer PROPERTIES
 
 target_link_libraries(ACDAnalizer PRIVATE
     Qt6::Charts
-    Qt::Quick
-    Qt::Widgets
-    Qt::Gui
-    Qt::Concurrent
+    Qt6::Quick
+    Qt6::Widgets
+    Qt6::Gui
+    Qt6::Concurrent
+    Qt6::Svg
     ACD2File
 )
 

@@ -9,12 +9,16 @@
 #include <QTreeView>
 #include <QPromise>
 #include <QSplitter>
+#include <QProgressBar>
+#include <QSplashScreen>
 
 class MainWindow : public QMainWindow
 {
   Q_OBJECT
 public:
   explicit MainWindow(QWidget *parent = nullptr);
+  const QString fillLight = "#1f1f1f";
+  const QString fillDark = "#e3e3e3";
 
 protected:
   void closeEvent(QCloseEvent *event) override;
@@ -23,6 +27,9 @@ protected:
   Settings* settings;
 
 private:
+  QString changeFillSvg(QString svg, QString fillColorHexText);
+  QIcon getIcon(const QString &path);
+  QIcon iconFromSvgString(const QString &svgString, int width = 24, int height = 24);
   void createControlBar();
   void createDashboard();
   void restoreLayout();
@@ -32,11 +39,15 @@ private:
   void openACD(QPromise<ACDObject *> &promise, ACDObject* obj);
   void frequencyChanged(int index);
   ParameterTable* getTable();
+  void about();
 
   QTreeView *view;
   TreeModel *model;
   QSplitter *splitter;
+  QTabWidget *tabWidget;
   QWidget *empty;
+  QProgressBar *progressBar;
+  QSplashScreen *splash;
 
 public slots:
   void openExp();

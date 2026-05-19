@@ -37,11 +37,13 @@ ModelDataWidget::ModelDataWidget(TableModel* model, AxisXType axisXType, QWidget
     model->addMapping(seriesColorHex, QRect((n-2)*2, 0, 2, model->rowCount()));
 
     auto axisY = createAxisY();
+    axisY->setLabelsColor(QColor(seriesColorHex));
     chart->addAxis(axisY, Qt::AlignLeft);
     //auto axisX = createAxisX(axisXType);
     //chart->addAxis(axisX, Qt::AlignBottom);
     series->attachAxis(axisX);
     series->attachAxis(axisY);
+    //series->setOpacity(0.5);
   }
 
   //chart->createDefaultAxes();

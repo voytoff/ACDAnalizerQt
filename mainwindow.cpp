@@ -8,6 +8,7 @@
 #include "channelblock.h"
 #include "settingsdlg.h"
 
+#include <regex>
 #include <QFileDialog>
 #include <QFlag>
 #include <QFile>
@@ -27,27 +28,35 @@
 #include <QScreen>
 #include <QToolBar>
 #include <QComboBox>
+#include <QPainter>
+#include <QPixmap>
+#include <QtSvg/QSvgRenderer>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow{parent}
   , acdObject(nullptr)
   , empty(new QWidget())
-  , settings(new Settings()) {
-  QIcon::setThemeName("Material Symbols Outlined");
+  , settings(new Settings())
+  , progressBar(new QProgressBar())
+  , tabWidget(new QTabWidget)
+  , splash(new QSplashScreen(QPixmap(":/images/wait.swg"), Qt::WindowStaysOnTopHint)) {
+  //QIcon::setThemeName("Material Symbols Outlined");
   QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
-  this->setWindowIcon(QIcon::fromTheme(QIcon::ThemeIcon::NetworkWired));
+  this->setWindowIcon(getIcon(":/images/calc.svg"));
   createControlBar();
   createDashboard();
   restoreLayout();
 }
 
 void MainWindow::createControlBar() {
-  QAction *openAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::FolderOpen), tr("Открыть..."), this);
-  QAction *closeAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::WindowClose), tr("Закрыть..."), this);
-  QAction *quitAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::SystemLogOut), tr("Выход"), this);
-  QAction *tableAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::EditSelectAll), tr("Таблица"), this);
-  QAction *settingsAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::ViewRestore), tr("Установки..."), this);
-  QAction *chartAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::ViewFullscreen), tr("График"), this);
+  QAction *openAction = new QAction(getIcon(":/images/open.svg"), tr("Открыть..."), this);
+  QAction *closeAction = new QAction(getIcon(":/images/close.svg"), tr("Закрыть..."), this);
+  QAction *quitAction = new QAction(getIcon(":/images/quit.svg"), tr("Выход"), this);
+  QAction *tableAction = new QAction(getIcon(":/images/table.svg"), tr("Таблица"), this);
+  QAction *chartAction = new QAction(getIcon(":/images/chart.svg"), tr("График"), this);
+  QAction *settingsAction = new QAction(getIcon(":/images/settings.svg"), tr("Установки..."), this);
+  QAction *aboutAction = new QAction(getIcon(":/images/about.svg"), tr("&О программе..."), this);
 
   openAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
   quitAction->setShortcuts(QKeySequence::Quit);
@@ -58,6 +67,7 @@ void MainWindow::createControlBar() {
   connect(tableAction, &QAction::triggered, this, &MainWindow::showTable);
   connect(settingsAction, &QAction::triggered, this, &MainWindow::doSettings);
   connect(chartAction, &QAction::triggered, this, &MainWindow::showChart);
+  connect(aboutAction, &QAction::triggered, this, &MainWindow::about);
 
   QMenu *fileMenu = menuBar()->addMenu(tr("Файл"));
   fileMenu->addAction(openAction);
@@ -72,11 +82,18 @@ void MainWindow::createControlBar() {
   toolMenu->addSeparator();
   toolMenu->addAction(settingsAction);
 
+  QMenu *helpMenu = menuBar()->addMenu(tr("&?"));
+  helpMenu->addAction(aboutAction);
+
 
   auto toolbar = addToolBar("Главный");
+  toolbar->setObjectName("General");
   toolbar->addAction(openAction);
+  toolbar->addSeparator();
   toolbar->addAction(tableAction);
   toolbar->addAction(chartAction);
+  toolbar->addSeparator();
+  toolbar->addAction(closeAction);
 
   QComboBox* frequency = new QComboBox(this);
   frequency->addItem("1", 1);
@@ -104,21 +121,36 @@ void MainWindow::createControlBar() {
     if (name == "axisXType" && value.isValid())
       axisXcombo->setCurrentIndex(value.toInt()-1);
   });
-
   toolbar->addSeparator();
   toolbar->addWidget(axisXcombo);
+
+  //progressBar->setRange(0, 100);
+  progressBar->setMaximum(0);
+  progressBar->setMinimum(0);
+  progressBar->setValue(0);
+  progressBar->setTextVisible(true);
+  statusBar()->addPermanentWidget(progressBar);
+  progressBar->setMaximumWidth(120);
+  progressBar->setMaximumHeight(16);
+  progressBar->hide();
 }
 
 void MainWindow::createDashboard() {
   createTree();
 
   QGridLayout *layout = new QGridLayout();
-  layout->setContentsMargins(2, 0, 2, 0);
+  layout->setContentsMargins(2, 1, 2, 0);
 
   splitter = new QSplitter(this);
   splitter->addWidget(view);
-  splitter->addWidget(empty);
+  splitter->addWidget(tabWidget);
   layout->addWidget(splitter, 0, 0);
+
+  tabWidget->setTabsClosable(true);
+  connect(tabWidget, &QTabWidget::tabCloseRequested, this, [this](int index) {
+    tabWidget->widget(index)->close();
+    tabWidget->removeTab(index);
+  });
 
   QWidget *widget = new QWidget;
   widget->setLayout(layout);
@@ -139,17 +171,26 @@ void MainWindow::openExp() {
     options);
   if (!files.isEmpty() && files.length() > 0) {
     view->setModel(NULL);
-    splitter->replaceWidget(1, empty);
+    ///splitter->replaceWidget(1, empty);
+    progressBar->show();
+    ///splash->show();
+    ///splash->showMessage("Loading modules...", Qt::AlignBottom | Qt::AlignRight, Qt::white);
     QFutureWatcher<ACDObject*> *watcher = new QFutureWatcher<ACDObject*>(this);
     connect(watcher, &QFutureWatcher<ACDObject*>::finished, this, [this, watcher]() {
       statusBar()->showMessage("Готово");
       acdObject = watcher->result();
       model = new TreeModel(acdObject);
       view->setModel(model);
+      progressBar->hide();
+      ///splash->finish(this);
     });
     ACDObject* obj = new ACDObject(files);
-    connect(obj, &ACDObject::fileLoaded, this, [this](int index, QString fileName) {
-      statusBar()->showMessage(QString("%1: %2").arg(index).arg(fileName));
+    //connect(obj, &ACDObject::fileLoaded, this, [this](int index, QString fileName) {});
+    //connect(obj, &ACDObject::channelBlockRead, this, [this, obj](QString fileName, int channelID, QString name) {
+    //  statusBar()->showMessage(QString("%1 : %2 : %3").arg(fileName).arg(channelID).arg(name));
+    //});
+    connect(obj, &ACDObject::dataBlockRead, this, [this, obj](QString fileName, int channelID, int blockID, int size) {
+      statusBar()->showMessage(QString("%1 : %2").arg(fileName, obj->channels->value(channelID)->name));
     });
     watcher->setFuture(
       QtConcurrent::task(
@@ -176,12 +217,14 @@ void MainWindow::restoreLayout() {
   Settings settings;
   restoreGeometry(settings.geometry());
   restoreState(settings.windowState());
+  splitter->restoreState(settings.splitter());
 }
 
 void MainWindow::saveLayout() {
   Settings settings;
   settings.geometry(saveGeometry());
   settings.windowState(saveState());
+  settings.splitter(splitter->saveState());
 }
 
 void MainWindow::createTree() {
@@ -208,12 +251,47 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   QMainWindow::closeEvent(event);
 }
 
+QString MainWindow::changeFillSvg(QString svg, QString fillColorHexText) {
+  std::regex fillRegex("fill=\"[^\"]*\"");
+  std::string newFill = fillColorHexText.toStdString();
+  std::string updatedSvg = std::regex_replace(svg.toStdString(), fillRegex, newFill);
+  return QString::fromStdString(updatedSvg);
+}
+
+QIcon MainWindow::getIcon(const QString &path) {
+  QFile file(path);
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    return QIcon(path);
+
+  QTextStream in(&file);
+  QString content = in.readAll();
+  file.close();
+  auto scheme = QGuiApplication::styleHints()->colorScheme();
+  auto color = scheme == Qt::ColorScheme::Dark ? fillDark : fillLight;
+  content = changeFillSvg(content, QString("fill=\"%1\"").arg(color));
+  return iconFromSvgString(content);
+}
+
+QIcon MainWindow::iconFromSvgString(const QString &svgString, int width, int height) {
+  // 1. Prepare SVG data
+  QByteArray byteArray = svgString.toUtf8();
+  QSvgRenderer renderer(byteArray);
+  // 2. Prepare a transparent Pixmap
+  QPixmap pixmap(width, height);
+  pixmap.fill(Qt::transparent);
+  // 3. Paint the SVG onto the Pixmap
+  QPainter painter(&pixmap);
+  renderer.render(&painter);
+  // 4. Return as QIcon
+  return QIcon(pixmap);
+}
+
 ParameterTable *MainWindow::getTable() {
   if (!acdObject) {
     QApplication::beep();
     return nullptr;
   }
-  splitter->replaceWidget(1, empty);
+  ///splitter->replaceWidget(1, empty);
   auto channels = model->channels();
   if (channels.count() == 0) {
     QApplication::beep();
@@ -233,7 +311,9 @@ void MainWindow::showTable() {
   TableModel* model = new TableModel(table);
   TableView* view = new TableView();
   view->setModel(model);
-  splitter->replaceWidget(1, view);
+  ///splitter->replaceWidget(1, view);
+  int index = tabWidget->addTab(view, table->headers.at(2));
+  tabWidget->setCurrentIndex(index);
 }
 
 void MainWindow::showChart() {
@@ -242,13 +322,25 @@ void MainWindow::showChart() {
   TableModel* model = new TableModel(table);
 
   ModelDataWidget* view = new ModelDataWidget(model, settings->axisXType());
-  splitter->replaceWidget(1, view);
+  ///splitter->replaceWidget(1, view);
+  int index = tabWidget->addTab(view, table->headers.at(2));
+  tabWidget->setCurrentIndex(index);
 }
 
 void MainWindow::doSettings() {
   SettingsDlg *dialog = new SettingsDlg(settings, this);
   int accepted = dialog->exec();
   if (accepted == QDialog::Accepted) {
-    //model->replace(index.row(), sensor);
   }
 }
+
+
+void MainWindow::about() {
+  QMessageBox::about(
+    this,
+    QString("О %1").arg(AppName),
+    QString("<p><b>%1</b> программа обработки данных результатов экспериментов "
+            "с датчиков регистрации аналоговой и цифровой информации.</p>").arg(AppName)
+    );
+}
+
