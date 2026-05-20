@@ -33,6 +33,7 @@
 #include <QtSvg/QSvgRenderer>
 #include <QMessageBox>
 
+
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow{parent}
   , acdObject(nullptr)

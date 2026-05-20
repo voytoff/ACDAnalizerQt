@@ -19,6 +19,10 @@ add_subdirectory(../ACD2FileQt ACD2File)
 
 qt_standard_project_setup()
 
+set(LOROOT "C:/Program Files/LibreOffice")
+include_directories(${LOROOT}/sdk/include)
+link_directories(${LOROOT}/program ${LOROOT}/sdk/lib)
+
 set(RESOURCE_FILES res.qrc)
 qt6_add_resources(PROJECT_RESOURCES ${RESOURCE_FILES})
 
@@ -61,6 +65,10 @@ target_link_libraries(ACDAnalizer PRIVATE
     Qt6::Gui
     Qt6::Concurrent
     Qt6::Svg
+    sal3
+    cppu3
+    cppuhelper3MSC
+    mergedlo
     ACD2File
 )
 
