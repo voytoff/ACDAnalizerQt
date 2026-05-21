@@ -33,6 +33,7 @@
 #include <QtSvg/QSvgRenderer>
 #include <QMessageBox>
 
+#include "ods"
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow{parent}
@@ -362,5 +363,12 @@ void MainWindow::about() {
     QString("<p><b>%1</b> программа обработки данных результатов экспериментов "
             "с датчиков регистрации аналоговой и цифровой информации.</p>").arg(AppName)
     );
+  auto *book = ods::Book::New();
+  ods::AutoDelete<ods::Book*> ad(book);
+  auto *spreadsheet = book->spreadsheet();
+  auto *sheet = spreadsheet->NewSheet("Sheet name");
+  auto *row = sheet->NewRowAt(0);
+  auto *cell = row->NewCellAt(0);
+  util::Save(book);
 }
 
