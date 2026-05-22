@@ -1,4 +1,10 @@
 #include "odsutils.h"
+#include "ods/inst/NumberDay.hpp"
+#include "ods/inst/NumberHours.hpp"
+#include "ods/inst/NumberMinutes.hpp"
+#include "ods/inst/NumberMonth.hpp"
+#include "ods/inst/NumberSeconds.hpp"
+#include "ods/inst/NumberYear.hpp"
 
 #include <ods/ods>
 
@@ -228,6 +234,9 @@ void setValue(ods::Cell *cell, QVariant value) {
     break;
   case QMetaType::QDateTime:
     cell->SetValue(value.toString());
+    //auto dt = value.toDateTime();
+    //cell->SetDate(new QDate(dt.date()));
+    //cell->SetTime(new ods::Time(dt.time()));
     //cell->SetDateTime(new QDateTime(value.toDateTime()));
     break;
   case QMetaType::QDate:
@@ -237,5 +246,33 @@ void setValue(ods::Cell *cell, QVariant value) {
     break;
   }
 }
+
+void setDateStyle(ods::Book *book, int col_index)
+{
+  ods::inst::StyleStyle *style = book->NewColumnStyle();
+  auto *date_style = style->NewDateStyle();
+  date_style->DeleteNodes();
+  date_style->NewText("DD.MM.YYYY HH:MM:SS,000");
+  /*
+  // If "long" is applied to e.g. "month" then 25/3/2018 becomes 25/03/2018
+  const QString num_style = QLatin1String("long");
+  // Display as "day.month.year hours:minutes:seconds":
+  date_style->NewDay()->style(num_style);
+  date_style->NewText(".");
+  date_style->NewMonth()->style(num_style);
+  date_style->NewText(".");
+  date_style->NewYear()->style(num_style);
+
+  date_style->NewText(" ");
+  date_style->NewHours()->style(num_style);
+  date_style->NewText(":");
+  date_style->NewMinutes()->style(num_style);
+  date_style->NewText(":");
+  date_style->NewSeconds()->style(num_style);
+  */
+  auto col = book->spreadsheet()->GetSheet(0)->GetColumn(col_index);
+  col->SetStyle(style);
+}
+
 }
 

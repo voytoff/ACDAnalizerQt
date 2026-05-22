@@ -17,6 +17,7 @@ namespace odsutils {
   int ReadFile();
   void Save(ods::Book *book, const QString file_name = nullptr);
   void setValue(ods::Cell* cell, QVariant value);
+  void setDateStyle(ods::Book *book, int col_index);
 }
 
 #endif // ODSUTILS_H

@@ -1,6 +1,9 @@
 #include "ACD2File_global.h"
 #include "mainwindow.h"
 #include "modeldatawidget.h"
+#include "ods/inst/NumberDay.hpp"
+#include "ods/inst/NumberMonth.hpp"
+#include "ods/inst/NumberYear.hpp"
 #include "parametertable.h"
 #include "tablemodel.h"
 #include "tableview.h"
@@ -8,7 +11,7 @@
 #include "channelblock.h"
 #include "settingsdlg.h"
 
-#include <regex>
+#include <QRegularExpression>
 #include <QFileDialog>
 #include <QFlag>
 #include <QFile>
@@ -277,10 +280,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 QString MainWindow::changeFillSvg(QString svg, QString fillColorHexText) {
-  std::regex fillRegex("fill=\"[^\"]*\"");
-  std::string newFill = fillColorHexText.toStdString();
-  std::string updatedSvg = std::regex_replace(svg.toStdString(), fillRegex, newFill);
-  return QString::fromStdString(updatedSvg);
+  auto updatedSvg = svg.replace(QRegularExpression("fill=\"[^\"]*\""), fillColorHexText);
+  return updatedSvg;
 }
 
 QIcon MainWindow::getIcon(const QString &path) {
@@ -374,6 +375,17 @@ void MainWindow::about() {
 }
 
 void MainWindow::exportExp() {
+  const QFileDialog::Options options = QFileDialog::DontUseNativeDialog;
+  QString selectedFilter;
+  QString fileName = QFileDialog::getSaveFileName(
+    this,
+    tr("Имя файла"),
+    "file.odt",
+    tr("Open Document файлы (*.odt);;Все файлы (*)"),
+    &selectedFilter,
+    options);
+  if (fileName.isEmpty()) return;
+
   ParameterTable* table = getTable();
   if (!table) return;
 
@@ -397,17 +409,12 @@ void MainWindow::exportExp() {
     }
   }
 
-  const QFileDialog::Options options = QFileDialog::DontUseNativeDialog;
-  QString selectedFilter;
-  QString fileName = QFileDialog::getSaveFileName(
+  odsutils::setDateStyle(book, 1);
+  if (QFile::exists(fileName)) QFile::remove(fileName);
+  odsutils::Save(book, fileName);
+  QMessageBox::information(
     this,
-    tr("Имя файла"),
-    "file.odt",
-    tr("Open Document файлы (*.odt);;Все файлы (*)"),
-    &selectedFilter,
-    options);
-  if (!fileName.isEmpty())
-    if (QFile::exists(fileName)) QFile::remove(fileName);
-    odsutils::Save(book, fileName);
+    QString("%1").arg(AppName),
+    QString("Файл '%1' сохранен в формате Open Document.").arg(fileName));
 }
 
