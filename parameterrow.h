@@ -15,6 +15,8 @@ public:
   QDateTime time;
   double index;
   QVariantList values;
+  QVariant value(int index);
+  int count() const;
 };
 
 #endif // PARAMETERARRAY_H

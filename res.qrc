@@ -11,5 +11,6 @@
         <file>images/about.svg</file>
         <file>images/dark.svg</file>
         <file>images/light.svg</file>
+        <file>images/export.svg</file>
     </qresource>
 </RCC>

@@ -33,7 +33,10 @@
 #include <QtSvg/QSvgRenderer>
 #include <QMessageBox>
 
-#include "ods"
+#include "odsutils.h"
+#include <ods/ods>
+#include <float.h>
+
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow{parent}
@@ -61,13 +64,16 @@ void MainWindow::createControlBar() {
   QAction *aboutAction = new QAction(getIcon(":/images/about.svg"), tr("&О программе..."), this);
   QAction *lightAction = new QAction(getIcon(":/images/light.svg"), tr("Дневной режим"), this);
   QAction *darkAction = new QAction(getIcon(":/images/dark.svg"), tr("Ночной режим"), this);
+  QAction *exportAction = new QAction(getIcon(":/images/export.svg"), tr("Экспорт..."), this);
 
   openAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
   tableAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_T));
   chartAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_U));
+  exportAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_E));
   quitAction->setShortcuts(QKeySequence::Quit);
 
   connect(openAction, &QAction::triggered, this, &MainWindow::openExp);
+  connect(exportAction, &QAction::triggered, this, &MainWindow::exportExp);
   connect(closeAction, &QAction::triggered, this, &MainWindow::closeExp);
   connect(quitAction, &QAction::triggered, this, &MainWindow::close);
   connect(tableAction, &QAction::triggered, this, &MainWindow::showTable);
@@ -83,6 +89,7 @@ void MainWindow::createControlBar() {
 
   QMenu *fileMenu = menuBar()->addMenu(tr("Файл"));
   fileMenu->addAction(openAction);
+  fileMenu->addAction(exportAction);
   fileMenu->addSeparator();
   fileMenu->addAction(closeAction);
   fileMenu->addSeparator();
@@ -105,6 +112,7 @@ void MainWindow::createControlBar() {
   auto toolbar = addToolBar("Главный");
   toolbar->setObjectName("General");
   toolbar->addAction(openAction);
+  toolbar->addAction(exportAction);
   toolbar->addSeparator();
   toolbar->addAction(tableAction);
   toolbar->addAction(chartAction);
@@ -363,12 +371,43 @@ void MainWindow::about() {
     QString("<p><b>%1</b> программа обработки данных результатов экспериментов "
             "с датчиков регистрации аналоговой и цифровой информации.</p>").arg(AppName)
     );
+}
+
+void MainWindow::exportExp() {
+  ParameterTable* table = getTable();
+  if (!table) return;
+
   auto *book = ods::Book::New();
   ods::AutoDelete<ods::Book*> ad(book);
   auto *spreadsheet = book->spreadsheet();
-  auto *sheet = spreadsheet->NewSheet("Sheet name");
+  auto *sheet = spreadsheet->NewSheet("Лист1");
+  // 1. Headers
   auto *row = sheet->NewRowAt(0);
-  auto *cell = row->NewCellAt(0);
-  util::Save(book);
+  for (int n = 0; n < table->headers.length(); n++) {
+    auto *cell = row->NewCellAt(n);
+    cell->SetValue(table->headers.at(n));
+  }
+  // 2. Values
+  for(int r = 1; r < table->table.count(); r++) {
+    auto *row = sheet->NewRowAt(r);
+    auto tableRow = table->row(r - 1);
+    for (int n = 0; n < tableRow->count(); n++) {
+      auto *cell = row->NewCellAt(n);
+      odsutils::setValue(cell, tableRow->value(n));
+    }
+  }
+
+  const QFileDialog::Options options = QFileDialog::DontUseNativeDialog;
+  QString selectedFilter;
+  QString fileName = QFileDialog::getSaveFileName(
+    this,
+    tr("Имя файла"),
+    "file.odt",
+    tr("Open Document файлы (*.odt);;Все файлы (*)"),
+    &selectedFilter,
+    options);
+  if (!fileName.isEmpty())
+    if (QFile::exists(fileName)) QFile::remove(fileName);
+    odsutils::Save(book, fileName);
 }
 

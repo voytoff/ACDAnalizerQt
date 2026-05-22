@@ -3,6 +3,10 @@
 
 ParameterTable::ParameterTable(): headers{"Индекс","Время"} {}
 
+ParameterRow* ParameterTable::row(int index) {
+  return index < table.length() ? const_cast<ParameterRow*>(&table.at(index)) : nullptr;
+}
+
 void ParameterTable::createIndex(QVector<Parameter *> data) {
   foreach (Parameter* parameter, data)
     table.append(ParameterRow(parameter->index, parameter->time, {}));

@@ -52,6 +52,7 @@ private:
 
 public slots:
   void openExp();
+  void exportExp();
   void closeExp();
   void showTable();
   void showChart();

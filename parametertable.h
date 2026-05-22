@@ -12,6 +12,7 @@ public:
   ParameterTable();
   QStringList headers;
   QList<ParameterRow> table;
+  ParameterRow *row(int index);
   void createIndex(QVector<Parameter*> data);
   void appendRow(Parameter* parameter);
   void appendColumn(QString name, QVector<Parameter*> data);
