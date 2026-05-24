@@ -380,8 +380,8 @@ void MainWindow::exportExp() {
   QString fileName = QFileDialog::getSaveFileName(
     this,
     tr("Имя файла"),
-    "file.odt",
-    tr("Open Document файлы (*.odt);;Все файлы (*)"),
+    "file.ods",
+    tr("Open Document файлы (*.ods);;Все файлы (*)"),
     &selectedFilter,
     options);
   if (fileName.isEmpty()) return;
@@ -409,7 +409,8 @@ void MainWindow::exportExp() {
     }
   }
 
-  odsutils::setDateStyle(book, 1);
+  //odsutils::setDateStyle(book, 1);
+
   if (QFile::exists(fileName)) QFile::remove(fileName);
   odsutils::Save(book, fileName);
   QMessageBox::information(

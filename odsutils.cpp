@@ -209,7 +209,7 @@ void PrintWidth(ods::inst::TableTableColumn *col, const ods::MustHave mh)
 
 void Save(ods::Book *book, const QString file_name) {
   MTL_CHECK_VOID(book != nullptr);
-  const QString name = file_name.size() == 0 ? QDir::home().filePath("file.odt") : file_name;
+  const QString name = file_name.size() == 0 ? QDir::home().filePath("file.ods") : file_name;
   QFile file(name);
   QString err;
   if (book->Save(file, &err))
@@ -233,11 +233,11 @@ void setValue(ods::Cell *cell, QVariant value) {
     cell->SetDouble(value.toDouble());
     break;
   case QMetaType::QDateTime:
-    cell->SetValue(value.toString());
+    //cell->SetValue(value.toString());
     //auto dt = value.toDateTime();
     //cell->SetDate(new QDate(dt.date()));
     //cell->SetTime(new ods::Time(dt.time()));
-    //cell->SetDateTime(new QDateTime(value.toDateTime()));
+    cell->SetDateTime(new QDateTime(value.toDateTime()));
     break;
   case QMetaType::QDate:
     cell->SetDate(new QDate(value.toDate()));
