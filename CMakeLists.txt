@@ -97,6 +97,7 @@ target_link_libraries(ACDAnalizer PRIVATE
     Qt6::Gui
     Qt6::Concurrent
     Qt6::Svg
+    dwmapi # DwmSetWindowAttribute
     #sal3
     #cppu3
     #cppuhelper3MSC

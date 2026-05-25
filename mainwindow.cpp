@@ -1,9 +1,6 @@
 #include "ACD2File_global.h"
 #include "mainwindow.h"
 #include "modeldatawidget.h"
-#include "ods/inst/NumberDay.hpp"
-#include "ods/inst/NumberMonth.hpp"
-#include "ods/inst/NumberYear.hpp"
 #include "parametertable.h"
 #include "tablemodel.h"
 #include "tableview.h"
@@ -35,6 +32,8 @@
 #include <QPixmap>
 #include <QtSvg/QSvgRenderer>
 #include <QMessageBox>
+#include <QDesktopServices>
+#include <QUrl>
 
 #include "odsutils.h"
 #include <ods/ods>
@@ -43,7 +42,7 @@
 #include <windows.h>
 #include <dwmapi.h>
 
-
+#pragma comment(lib, "dwmapi.lib") // MSVC Only
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow{parent}
@@ -57,11 +56,6 @@ MainWindow::MainWindow(QWidget *parent)
   createControlBar();
   createDashboard();
   restoreLayout();
-}
-
-void MainWindow::setDarkTitleBar(HWND hwnd, bool dark) {
-  BOOL value = dark ? TRUE : FALSE;
-  DwmSetWindowAttribute(hwnd, 20, &value, sizeof(value));
 }
 
 void MainWindow::setIcons() {
@@ -91,8 +85,6 @@ void MainWindow::createControlBar() {
   darkAction = new QAction(tr("Ночной режим"), this);
   exportAction = new QAction(tr("Экспорт..."), this);
 
-  applayColorScheme(settings->colorScheme());
-
   openAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
   tableAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_T));
   chartAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_U));
@@ -109,6 +101,8 @@ void MainWindow::createControlBar() {
   connect(aboutAction, &QAction::triggered, this, &MainWindow::about);
   connect(lightAction, &QAction::triggered, this, [this]() { applayColorScheme(ColorScheme::Light); });
   connect(darkAction, &QAction::triggered, this, [this]() { applayColorScheme(ColorScheme::Dark); });
+
+  applayColorScheme(settings->colorScheme());
 
   QMenu *fileMenu = menuBar()->addMenu(tr("Файл"));
   fileMenu->addAction(openAction);
@@ -355,16 +349,23 @@ int MainWindow::addTab(QWidget *widget, const QString &name) {
   return index;
 }
 
-void MainWindow::applayColorScheme(ColorScheme scheme) {
-  QGuiApplication::styleHints()->setColorScheme((Qt::ColorScheme)scheme);
-  setIcons();
-  qApp->style()->polish(qApp);
-  this->update();
-}
-
 void MainWindow::setColorScheme(ColorScheme scheme) {
   settings->colorScheme(scheme);
   applayColorScheme(scheme);
+}
+
+void MainWindow::applayColorScheme(ColorScheme scheme) {
+  QGuiApplication::styleHints()->setColorScheme((Qt::ColorScheme)scheme);
+  setIcons();
+  bool dark = scheme == ColorScheme::Dark;
+  lightAction->setVisible(dark);
+  darkAction->setVisible(!dark);
+  setDarkTitleBar(dark);
+}
+
+void MainWindow::setDarkTitleBar(bool dark) {
+  BOOL value = dark ? TRUE : FALSE;
+  DwmSetWindowAttribute(reinterpret_cast<HWND>(this->winId()), 20, &value, sizeof(value));
 }
 
 void MainWindow::showTable() {
@@ -410,14 +411,14 @@ void MainWindow::about() {
 void MainWindow::exportExp() {
   const QFileDialog::Options options = QFileDialog::DontUseNativeDialog;
   QString selectedFilter;
-  QString fileName = QFileDialog::getSaveFileName(
+  QString filePath = QFileDialog::getSaveFileName(
     this,
     tr("Имя файла"),
     "file.ods",
     tr("Open Document файлы (*.ods);;Все файлы (*)"),
     &selectedFilter,
     options);
-  if (fileName.isEmpty()) return;
+  if (filePath.isEmpty()) return;
 
   ParameterTable* table = getTable();
   if (!table) return;
@@ -433,22 +434,30 @@ void MainWindow::exportExp() {
     cell->SetValue(table->headers.at(n));
   }
   // 2. Values
+  auto *style = odsutils::getDateStyle(book);
   for(int r = 1; r < table->table.count(); r++) {
     auto *row = sheet->NewRowAt(r);
     auto tableRow = table->row(r - 1);
     for (int n = 0; n < tableRow->count(); n++) {
       auto *cell = row->NewCellAt(n);
       odsutils::setValue(cell, tableRow->value(n));
+      if (n == 1) cell->SetStyle(style);
     }
   }
 
-  odsutils::setDateStyle(book, 1);
+  //auto col = sheet->GetColumn(1);
+  //auto *style = odsutils::getDateStyle(book);
+  //col->SetStyle(style);
 
-  if (QFile::exists(fileName)) QFile::remove(fileName);
-  odsutils::Save(book, fileName);
-  QMessageBox::information(
-    this,
-    AppName,
-    QString("Файл '%1' сохранен в формате Open Document.").arg(fileName));
+  if (QFile::exists(filePath)) QFile::remove(filePath);
+  odsutils::Save(book, filePath);
+  auto response = QMessageBox::information(
+    this, AppName,
+    QString("Файл '%1' сохранен в формате Open Document. Открыть этот файл?").arg(filePath),
+    QMessageBox::StandardButton::Yes,
+    QMessageBox::StandardButton::No);
+  if (response == QMessageBox::Yes) {
+    QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
+  }
 }
 

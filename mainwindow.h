@@ -44,7 +44,7 @@ private:
   void applayColorScheme(ColorScheme scheme);
   void setColorScheme(ColorScheme scheme);
   void setIcons();
-  void setDarkTitleBar(HWND hwnd, bool dark);
+  void setDarkTitleBar(bool dark);
 
   QTreeView *view;
   TreeModel *model;
