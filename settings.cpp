@@ -19,6 +19,14 @@ AxisXType Settings::axisXType(QVariant value) {
   auto result = this->value("axisXType").toInt();
   return result == 0 ? AxisXType::Index : (AxisXType)this->value("axisXType").toInt();
 }
+ColorScheme Settings::colorScheme(QVariant value) {
+  if (value.isValid() && value.toInt() > 0) {
+    this->setValue("colorScheme", value);
+    emit propertyChanged("colorScheme", this->value("colorScheme"));
+  }
+  auto result = this->value("colorScheme").toInt();
+  return result == 0 ? ColorScheme::Light : (ColorScheme)this->value("colorScheme").toInt();
+}
 
 QByteArray Settings::geometry(QByteArray value) {
   if (!value.isEmpty())

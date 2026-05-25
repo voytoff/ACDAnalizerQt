@@ -40,6 +40,10 @@
 #include <ods/ods>
 #include <float.h>
 
+#include <windows.h>
+#include <dwmapi.h>
+
+
 
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow{parent}
@@ -49,25 +53,45 @@ MainWindow::MainWindow(QWidget *parent)
   , progressBar(new QProgressBar())
   , tabWidget(new QTabWidget)
   , splash(new QSplashScreen(QPixmap(":/images/wait.swg"), Qt::WindowStaysOnTopHint)) {
-  //QIcon::setThemeName("Material Symbols Outlined");
-  QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
-  this->setWindowIcon(getIcon(":/images/calc.svg"));
+  QIcon::setThemeName("Material Symbols Outlined");
   createControlBar();
   createDashboard();
   restoreLayout();
 }
 
+void MainWindow::setDarkTitleBar(HWND hwnd, bool dark) {
+  BOOL value = dark ? TRUE : FALSE;
+  DwmSetWindowAttribute(hwnd, 20, &value, sizeof(value));
+}
+
+void MainWindow::setIcons() {
+  this->setWindowIcon(getIcon(":/images/calc.svg"));
+
+  openAction->setIcon(getIcon(":/images/open.svg"));
+  closeAction->setIcon(getIcon(":/images/close.svg"));
+  quitAction->setIcon(getIcon(":/images/quit.svg"));
+  tableAction->setIcon(getIcon(":/images/table.svg"));
+  chartAction->setIcon(getIcon(":/images/chart.svg"));
+  settingsAction->setIcon(getIcon(":/images/settings.svg"));
+  aboutAction->setIcon(getIcon(":/images/about.svg"));
+  lightAction->setIcon(getIcon(":/images/light.svg"));
+  darkAction->setIcon(getIcon(":/images/dark.svg"));
+  exportAction->setIcon(getIcon(":/images/export.svg"));
+}
+
 void MainWindow::createControlBar() {
-  QAction *openAction = new QAction(getIcon(":/images/open.svg"), tr("Открыть..."), this);
-  QAction *closeAction = new QAction(getIcon(":/images/close.svg"), tr("Закрыть..."), this);
-  QAction *quitAction = new QAction(getIcon(":/images/quit.svg"), tr("Выход"), this);
-  QAction *tableAction = new QAction(getIcon(":/images/table.svg"), tr("Таблица"), this);
-  QAction *chartAction = new QAction(getIcon(":/images/chart.svg"), tr("График"), this);
-  QAction *settingsAction = new QAction(getIcon(":/images/settings.svg"), tr("Установки..."), this);
-  QAction *aboutAction = new QAction(getIcon(":/images/about.svg"), tr("&О программе..."), this);
-  QAction *lightAction = new QAction(getIcon(":/images/light.svg"), tr("Дневной режим"), this);
-  QAction *darkAction = new QAction(getIcon(":/images/dark.svg"), tr("Ночной режим"), this);
-  QAction *exportAction = new QAction(getIcon(":/images/export.svg"), tr("Экспорт..."), this);
+  openAction = new QAction(tr("Открыть..."), this);
+  closeAction = new QAction(tr("Закрыть..."), this);
+  quitAction = new QAction(tr("Выход"), this);
+  tableAction = new QAction(tr("Таблица"), this);
+  chartAction = new QAction(tr("График"), this);
+  settingsAction = new QAction(tr("Установки..."), this);
+  aboutAction = new QAction(tr("&О программе..."), this);
+  lightAction = new QAction(tr("Дневной режим"), this);
+  darkAction = new QAction(tr("Ночной режим"), this);
+  exportAction = new QAction(tr("Экспорт..."), this);
+
+  applayColorScheme(settings->colorScheme());
 
   openAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
   tableAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_T));
@@ -83,12 +107,8 @@ void MainWindow::createControlBar() {
   connect(settingsAction, &QAction::triggered, this, &MainWindow::doSettings);
   connect(chartAction, &QAction::triggered, this, &MainWindow::showChart);
   connect(aboutAction, &QAction::triggered, this, &MainWindow::about);
-  connect(lightAction, &QAction::triggered, this, [this](){
-    QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Light);
-  });
-  connect(darkAction, &QAction::triggered, this, [this](){
-    QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
-  });
+  connect(lightAction, &QAction::triggered, this, [this]() { applayColorScheme(ColorScheme::Light); });
+  connect(darkAction, &QAction::triggered, this, [this]() { applayColorScheme(ColorScheme::Dark); });
 
   QMenu *fileMenu = menuBar()->addMenu(tr("Файл"));
   fileMenu->addAction(openAction);
@@ -152,8 +172,6 @@ void MainWindow::createControlBar() {
   toolbar->addWidget(axisXcombo);
 
   progressBar->setRange(0, 0);
-  //progressBar->setMaximum(0);
-  //progressBar->setMinimum(0);
   progressBar->setValue(0);
   progressBar->setTextVisible(true);
   statusBar()->addPermanentWidget(progressBar);
@@ -241,17 +259,17 @@ void MainWindow::closeExp() {
 }
 
 void MainWindow::restoreLayout() {
-  Settings settings;
-  restoreGeometry(settings.geometry());
-  restoreState(settings.windowState());
-  splitter->restoreState(settings.splitter());
+  //Settings settings;
+  restoreGeometry(settings->geometry());
+  restoreState(settings->windowState());
+  splitter->restoreState(settings->splitter());
 }
 
 void MainWindow::saveLayout() {
-  Settings settings;
-  settings.geometry(saveGeometry());
-  settings.windowState(saveState());
-  settings.splitter(splitter->saveState());
+  //Settings settings;
+  settings->geometry(saveGeometry());
+  settings->windowState(saveState());
+  settings->splitter(splitter->saveState());
 }
 
 void MainWindow::createTree() {
@@ -337,6 +355,18 @@ int MainWindow::addTab(QWidget *widget, const QString &name) {
   return index;
 }
 
+void MainWindow::applayColorScheme(ColorScheme scheme) {
+  QGuiApplication::styleHints()->setColorScheme((Qt::ColorScheme)scheme);
+  setIcons();
+  qApp->style()->polish(qApp);
+  this->update();
+}
+
+void MainWindow::setColorScheme(ColorScheme scheme) {
+  settings->colorScheme(scheme);
+  applayColorScheme(scheme);
+}
+
 void MainWindow::showTable() {
   ParameterTable* table = getTable();
   if (!table) return;
@@ -344,7 +374,6 @@ void MainWindow::showTable() {
   TableView* view = new TableView();
   view->setModel(model);
   view->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-  ///splitter->replaceWidget(1, view);
   addTab(view, table->headers.at(2));
 }
 
@@ -361,7 +390,11 @@ void MainWindow::showChart() {
 void MainWindow::doSettings() {
   SettingsDlg *dialog = new SettingsDlg(settings, this);
   int accepted = dialog->exec();
-  if (accepted == QDialog::Accepted) {}
+  if (accepted == QDialog::Accepted) {
+    auto colorScheme = settings->colorScheme();
+    if ((Qt::ColorScheme)colorScheme != QGuiApplication::styleHints()->colorScheme())
+      applayColorScheme(colorScheme);
+  }
 }
 
 
@@ -409,13 +442,13 @@ void MainWindow::exportExp() {
     }
   }
 
-  //odsutils::setDateStyle(book, 1);
+  odsutils::setDateStyle(book, 1);
 
   if (QFile::exists(fileName)) QFile::remove(fileName);
   odsutils::Save(book, fileName);
   QMessageBox::information(
     this,
-    QString("%1").arg(AppName),
+    AppName,
     QString("Файл '%1' сохранен в формате Open Document.").arg(fileName));
 }
 

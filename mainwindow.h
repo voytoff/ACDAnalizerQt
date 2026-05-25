@@ -41,6 +41,10 @@ private:
   ParameterTable* getTable();
   void about();
   int addTab(QWidget *widget, const QString &name);
+  void applayColorScheme(ColorScheme scheme);
+  void setColorScheme(ColorScheme scheme);
+  void setIcons();
+  void setDarkTitleBar(HWND hwnd, bool dark);
 
   QTreeView *view;
   TreeModel *model;
@@ -49,6 +53,17 @@ private:
   QWidget *empty;
   QProgressBar *progressBar;
   QSplashScreen *splash;
+
+  QAction *openAction;
+  QAction *closeAction;
+  QAction *quitAction;
+  QAction *tableAction;
+  QAction *chartAction;
+  QAction *settingsAction;
+  QAction *aboutAction;
+  QAction *lightAction;
+  QAction *darkAction;
+  QAction *exportAction;
 
 public slots:
   void openExp();
