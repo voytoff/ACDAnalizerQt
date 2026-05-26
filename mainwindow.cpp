@@ -7,6 +7,7 @@
 #include "treepaintdelegate.h"
 #include "channelblock.h"
 #include "settingsdlg.h"
+#include "schemehelper.h"
 
 #include <QRegularExpression>
 #include <QFileDialog>
@@ -39,11 +40,6 @@
 #include <ods/ods>
 #include <float.h>
 
-#include <windows.h>
-#include <dwmapi.h>
-
-#pragma comment(lib, "dwmapi.lib") // MSVC Only
-
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow{parent}
   , acdObject(nullptr)
@@ -51,45 +47,26 @@ MainWindow::MainWindow(QWidget *parent)
   , settings(new Settings())
   , progressBar(new QProgressBar())
   , tabWidget(new QTabWidget)
+  , schemeHelper(new SchemeHelper(this, ":/images/calc.svg"))
   , splash(new QSplashScreen(QPixmap(":/images/wait.swg"), Qt::WindowStaysOnTopHint)) {
   QIcon::setThemeName("Material Symbols Outlined");
+  createActions();
   createControlBar();
   createDashboard();
   restoreLayout();
 }
 
-void MainWindow::setIcons() {
-  this->setWindowIcon(getIcon(":/images/calc.svg"));
-
-  openAction->setIcon(getIcon(":/images/open.svg"));
-  closeAction->setIcon(getIcon(":/images/close.svg"));
-  quitAction->setIcon(getIcon(":/images/quit.svg"));
-  tableAction->setIcon(getIcon(":/images/table.svg"));
-  chartAction->setIcon(getIcon(":/images/chart.svg"));
-  settingsAction->setIcon(getIcon(":/images/settings.svg"));
-  aboutAction->setIcon(getIcon(":/images/about.svg"));
-  lightAction->setIcon(getIcon(":/images/light.svg"));
-  darkAction->setIcon(getIcon(":/images/dark.svg"));
-  exportAction->setIcon(getIcon(":/images/export.svg"));
-}
-
-void MainWindow::createControlBar() {
-  openAction = new QAction(tr("Открыть..."), this);
-  closeAction = new QAction(tr("Закрыть..."), this);
-  quitAction = new QAction(tr("Выход"), this);
-  tableAction = new QAction(tr("Таблица"), this);
-  chartAction = new QAction(tr("График"), this);
-  settingsAction = new QAction(tr("Установки..."), this);
-  aboutAction = new QAction(tr("&О программе..."), this);
-  lightAction = new QAction(tr("Дневной режим"), this);
-  darkAction = new QAction(tr("Ночной режим"), this);
-  exportAction = new QAction(tr("Экспорт..."), this);
-
-  openAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_O));
-  tableAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_T));
-  chartAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_U));
-  exportAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_E));
-  quitAction->setShortcuts(QKeySequence::Quit);
+void MainWindow::createActions() {
+  openAction = schemeHelper->create(tr("Открыть..."), ":/images/open.svg", QKeySequence(Qt::CTRL | Qt::Key_O));
+  closeAction = schemeHelper->create(tr("Закрыть..."), ":/images/close.svg");
+  quitAction = schemeHelper->create(tr("Выход"), ":/images/quit.svg", QKeySequence::Quit);
+  tableAction = schemeHelper->create(tr("Таблица"), ":/images/table.svg", QKeySequence(Qt::CTRL | Qt::Key_T));
+  chartAction = schemeHelper->create(tr("График"), ":/images/chart.svg", QKeySequence(Qt::CTRL | Qt::Key_U));
+  settingsAction = schemeHelper->create(tr("Установки..."), ":/images/settings.svg");
+  aboutAction = schemeHelper->create(tr("&О программе..."), ":/images/about.svg");
+  lightAction = schemeHelper->createLightAction(tr("Дневной режим"), ":/images/light.svg");
+  darkAction = schemeHelper->createDarkAction(tr("Ночной режим"), ":/images/dark.svg");
+  exportAction = schemeHelper->create(tr("Экспорт..."), ":/images/export.svg", QKeySequence(Qt::CTRL | Qt::Key_E));
 
   connect(openAction, &QAction::triggered, this, &MainWindow::openExp);
   connect(exportAction, &QAction::triggered, this, &MainWindow::exportExp);
@@ -99,11 +76,11 @@ void MainWindow::createControlBar() {
   connect(settingsAction, &QAction::triggered, this, &MainWindow::doSettings);
   connect(chartAction, &QAction::triggered, this, &MainWindow::showChart);
   connect(aboutAction, &QAction::triggered, this, &MainWindow::about);
-  connect(lightAction, &QAction::triggered, this, [this]() { applayColorScheme(ColorScheme::Light); });
-  connect(darkAction, &QAction::triggered, this, [this]() { applayColorScheme(ColorScheme::Dark); });
 
-  applayColorScheme(settings->colorScheme());
+  schemeHelper->applayColorScheme(settings->colorScheme());
+}
 
+void MainWindow::createControlBar() {
   QMenu *fileMenu = menuBar()->addMenu(tr("Файл"));
   fileMenu->addAction(openAction);
   fileMenu->addAction(exportAction);
@@ -291,39 +268,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   QMainWindow::closeEvent(event);
 }
 
-QString MainWindow::changeFillSvg(QString svg, QString fillColorHexText) {
-  auto updatedSvg = svg.replace(QRegularExpression("fill=\"[^\"]*\""), fillColorHexText);
-  return updatedSvg;
-}
-
-QIcon MainWindow::getIcon(const QString &path) {
-  QFile file(path);
-  if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-    return QIcon(path);
-
-  QTextStream in(&file);
-  QString content = in.readAll();
-  file.close();
-  auto scheme = QGuiApplication::styleHints()->colorScheme();
-  auto color = scheme == Qt::ColorScheme::Dark ? fillDark : fillLight;
-  content = changeFillSvg(content, QString("fill=\"%1\"").arg(color));
-  return iconFromSvgString(content);
-}
-
-QIcon MainWindow::iconFromSvgString(const QString &svgString, int width, int height) {
-  // 1. Prepare SVG data
-  QByteArray byteArray = svgString.toUtf8();
-  QSvgRenderer renderer(byteArray);
-  // 2. Prepare a transparent Pixmap
-  QPixmap pixmap(width, height);
-  pixmap.fill(Qt::transparent);
-  // 3. Paint the SVG onto the Pixmap
-  QPainter painter(&pixmap);
-  renderer.render(&painter);
-  // 4. Return as QIcon
-  return QIcon(pixmap);
-}
-
 ParameterTable *MainWindow::getTable() {
   if (!acdObject) {
     QApplication::beep();
@@ -351,21 +295,7 @@ int MainWindow::addTab(QWidget *widget, const QString &name) {
 
 void MainWindow::setColorScheme(ColorScheme scheme) {
   settings->colorScheme(scheme);
-  applayColorScheme(scheme);
-}
-
-void MainWindow::applayColorScheme(ColorScheme scheme) {
-  QGuiApplication::styleHints()->setColorScheme((Qt::ColorScheme)scheme);
-  setIcons();
-  bool dark = scheme == ColorScheme::Dark;
-  lightAction->setVisible(dark);
-  darkAction->setVisible(!dark);
-  setDarkTitleBar(dark);
-}
-
-void MainWindow::setDarkTitleBar(bool dark) {
-  BOOL value = dark ? TRUE : FALSE;
-  DwmSetWindowAttribute(reinterpret_cast<HWND>(this->winId()), 20, &value, sizeof(value));
+  schemeHelper->applayColorScheme(scheme);
 }
 
 void MainWindow::showTable() {
@@ -394,7 +324,7 @@ void MainWindow::doSettings() {
   if (accepted == QDialog::Accepted) {
     auto colorScheme = settings->colorScheme();
     if ((Qt::ColorScheme)colorScheme != QGuiApplication::styleHints()->colorScheme())
-      applayColorScheme(colorScheme);
+      schemeHelper->applayColorScheme(colorScheme);
   }
 }
 

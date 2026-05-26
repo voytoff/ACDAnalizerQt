@@ -21,6 +21,10 @@ set(ACDFILEDIR "../ACD2FileQt")
 include_directories(${ACDFILEDIR}/lib)
 add_subdirectory(${ACDFILEDIR} ACD2File)
 
+set(SCHEMEHELPEREDIR "../SchemeHelperQt")
+include_directories(${SCHEMEHELPEREDIR})
+add_subdirectory(${SCHEMEHELPEREDIR} SchemeHelper)
+
 #set(ASPOSEDIR "../Aspose")
 #include_directories(${ASPOSEDIR}/include)
 #add_subdirectory(${ASPOSEDIR} Aspose)
@@ -97,12 +101,12 @@ target_link_libraries(ACDAnalizer PRIVATE
     Qt6::Gui
     Qt6::Concurrent
     Qt6::Svg
-    dwmapi # DwmSetWindowAttribute
     #sal3
     #cppu3
     #cppuhelper3MSC
     #mergedlo
     ACD2File
+    SchemeHelper
     ods #${zlib_libs}
 )
 

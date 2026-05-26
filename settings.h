@@ -2,7 +2,10 @@
 #define SETTINGS_H
 
 #include "ACD2File_global.h"
+#include "SchemeHelper_global.h"
+
 #include <QSettings>
+
 const QString Company = "NIIHM";
 const QString AppName = "ACDAnalizer";
 
