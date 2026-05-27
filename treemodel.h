@@ -18,7 +18,7 @@ class TreeModel : public QAbstractItemModel {
 public:
   Q_DISABLE_COPY_MOVE(TreeModel)
 
-  explicit TreeModel(const QString &data, QObject *parent = nullptr);
+  //explicit TreeModel(const QString &data, QObject *parent = nullptr);
   explicit TreeModel(const ACDObject *acdObject, QObject *parent = nullptr);
   ~TreeModel() override;
 

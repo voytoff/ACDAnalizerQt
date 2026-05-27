@@ -182,39 +182,45 @@ void MainWindow::openExp() {
     this,
     tr("Выбор файлов"),
     "",
-    tr("ACD2 файлы (*.acd);;Все файлы (*)"),
+    QString("%1;;%2;;%3").arg(filter_acd, filter_mmp, filter_all),
     &selectedFilter,
     options);
   if (!files.isEmpty() && files.length() > 0) {
     view->setModel(NULL);
-    ///splitter->replaceWidget(1, empty);
     progressBar->show();
-    ///splash->show();
-    ///splash->showMessage("Loading modules...", Qt::AlignBottom | Qt::AlignRight, Qt::white);
-    QFutureWatcher<ACDObject*> *watcher = new QFutureWatcher<ACDObject*>(this);
-    connect(watcher, &QFutureWatcher<ACDObject*>::finished, this, [this, watcher]() {
-      statusBar()->showMessage("Готово");
-      acdObject = watcher->result();
-      model = new TreeModel(acdObject);
-      view->setModel(model);
-      progressBar->hide();
-      ///splash->finish(this);
-    });
-    ACDObject* obj = new ACDObject(files);
-    //connect(obj, &ACDObject::fileLoaded, this, [this](int index, QString fileName) {});
-    //connect(obj, &ACDObject::channelBlockRead, this, [this, obj](QString fileName, int channelID, QString name) {
-    //  statusBar()->showMessage(QString("%1 : %2 : %3").arg(fileName).arg(channelID).arg(name));
-    //});
-    connect(obj, &ACDObject::dataBlockRead, this, [this, obj](QString fileName, int channelID, int blockID, int size) {
-      statusBar()->showMessage(QString("%1 : %2").arg(fileName, obj->channels->value(channelID)->name));
-    });
-    watcher->setFuture(
-      QtConcurrent::task(
-        &MainWindow::openACD)
+
+    if (selectedFilter == filter_acd) {
+
+      QFutureWatcher<ACDObject*> *watcher = new QFutureWatcher<ACDObject*>(this);
+      connect(watcher, &QFutureWatcher<ACDObject*>::finished, this, [this, watcher]() {
+        statusBar()->showMessage("Готово");
+        acdObject = watcher->result();
+        model = new TreeModel(acdObject);
+        view->setModel(model);
+        progressBar->hide();
+      });
+
+      ACDObject* obj = new ACDObject(files);
+      //connect(obj, &ACDObject::fileLoaded, this, [this](int index, QString fileName) {});
+      //connect(obj, &ACDObject::channelBlockRead, this, [this, obj](QString fileName, int channelID, QString name) {
+      //  statusBar()->showMessage(QString("%1 : %2 : %3").arg(fileName).arg(channelID).arg(name));
+      //});
+      connect(obj, &ACDObject::dataBlockRead, this, [this, obj](QString fileName, int channelID, int blockID, int size) {
+        statusBar()->showMessage(QString("%1 : %2").arg(fileName, obj->channels->value(channelID)->name));
+      });
+      watcher->setFuture(
+        QtConcurrent::task(
+          &MainWindow::openACD)
           .withArguments(this, obj)
           .withPriority(5)
           .spawn());
-  }
+    }
+
+    } else if (selectedFilter == filter_mmp) {
+
+    } else {
+
+    }
 }
 
 void MainWindow::openACD(QPromise<ACDObject*> &promise, ACDObject* obj) {
@@ -271,7 +277,6 @@ ParameterTable *MainWindow::getTable() {
     QApplication::beep();
     return nullptr;
   }
-  ///splitter->replaceWidget(1, empty);
   auto channels = model->channels();
   if (channels.count() == 0) {
     QApplication::beep();

@@ -7,13 +7,13 @@
 #include <QStringList>
 
 using namespace Qt::StringLiterals;
-
+/*
 TreeModel::TreeModel(const QString &data, QObject *parent)
   : QAbstractItemModel(parent)
   , acdObject(nullptr)
   , rootItem(std::make_unique<TreeItem>(QVariantList{tr("Имя канала"), tr("Summary")})) {
   setupModelData(QStringView{data}.split(u'\n'), rootItem.get());
-}
+}*/
 TreeModel::TreeModel(const ACDObject *acdObject, QObject *parent)
   : QAbstractItemModel(parent)
   , rootItem(std::make_unique<TreeItem>(QVariantList{tr("Имя канала"), tr("Summary")})) {
@@ -106,7 +106,7 @@ int TreeModel::rowCount(const QModelIndex &parent) const {
 
   return parentItem->childCount();
 }
-
+/*
 void TreeModel::setupModelData(const QList<QStringView> &lines, TreeItem *parent) {
   struct ParentIndentation
   {
@@ -147,7 +147,7 @@ void TreeModel::setupModelData(const QList<QStringView> &lines, TreeItem *parent
     }
   }
 }
-
+*/
 void TreeModel::setupModelData(const ACDObject *acdObject, TreeItem *parent) {
   QMap<QChar, QList<ChannelBlock*>> groups;
   foreach (ChannelBlock *chanelBlock, *acdObject->channels) {

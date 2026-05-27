@@ -21,6 +21,10 @@ set(ACDFILEDIR "../ACD2FileQt")
 include_directories(${ACDFILEDIR}/lib)
 add_subdirectory(${ACDFILEDIR} ACD2File)
 
+set(MMPFILEDIR "../MMPFileQt")
+include_directories(${MMPFILEDIR}/lib)
+add_subdirectory(${MMPFILEDIR} MMPFile)
+
 set(SCHEMEHELPEREDIR "../SchemeHelperQt")
 include_directories(${SCHEMEHELPEREDIR})
 add_subdirectory(${SCHEMEHELPEREDIR} SchemeHelper)
@@ -106,6 +110,7 @@ target_link_libraries(ACDAnalizer PRIVATE
     #cppuhelper3MSC
     #mergedlo
     ACD2File
+    MMPFile
     SchemeHelper
     ods #${zlib_libs}
 )

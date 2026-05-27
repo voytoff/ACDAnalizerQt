@@ -13,6 +13,10 @@
 #include <QProgressBar>
 #include <QSplashScreen>
 
+const QString filter_acd = "ACD2 файлы (*.acd)";
+const QString filter_mmp = "MMP файлы (*.mmp *.prm)";
+const QString filter_all = "Все файлы (*)";
+
 class MainWindow : public QMainWindow
 {
   Q_OBJECT
