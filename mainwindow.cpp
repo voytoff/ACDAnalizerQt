@@ -77,7 +77,7 @@ void MainWindow::createActions() {
   connect(chartAction, &QAction::triggered, this, &MainWindow::showChart);
   connect(aboutAction, &QAction::triggered, this, &MainWindow::about);
 
-  schemeHelper->applayColorScheme(settings->colorScheme());
+  schemeHelper->applayColorScheme(settings->colorScheme(), true);
 }
 
 void MainWindow::createControlBar() {
@@ -230,14 +230,12 @@ void MainWindow::closeExp() {
 }
 
 void MainWindow::restoreLayout() {
-  //Settings settings;
   restoreGeometry(settings->geometry());
   restoreState(settings->windowState());
   splitter->restoreState(settings->splitter());
 }
 
 void MainWindow::saveLayout() {
-  //Settings settings;
   settings->geometry(saveGeometry());
   settings->windowState(saveState());
   settings->splitter(splitter->saveState());
