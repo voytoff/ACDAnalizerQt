@@ -176,7 +176,7 @@ void MainWindow::createDashboard() {
 }
 
 void MainWindow::openExp() {
-  const QFileDialog::Options options = QFileDialog::DontUseNativeDialog;
+  const QFileDialog::Options options = settings->nativeDlg() ? (QFileDialog::Options)0 : QFileDialog::DontUseNativeDialog;
   QString selectedFilter;
   QStringList files = QFileDialog::getOpenFileNames(
     this,
@@ -319,14 +319,14 @@ ParameterTable *MainWindow::getTable() {
       QApplication::beep();
       return nullptr;
     }
-    ParameterTable* table = new ParameterTable(channels, settings->frequency());
+    table = new ParameterTable(channels, settings->frequency());
   } else if (mmpObject) {
     auto channels = model->mchannels();
     if (channels.count() == 0) {
       QApplication::beep();
       return nullptr;
     }
-    ParameterTable* table = new ParameterTable(channels, settings->frequency());
+    table = new ParameterTable(channels, settings->frequency());
   }
   return table;
 }
@@ -337,7 +337,6 @@ void MainWindow::showTable() {
   TableModel* model = new TableModel(table);
   TableView* view = new TableView();
   view->setModel(model);
-  view->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
   addTab(view, table->headers.at(2));
 }
 
@@ -371,7 +370,7 @@ void MainWindow::about() {
 }
 
 void MainWindow::exportExp() {
-  const QFileDialog::Options options = QFileDialog::DontUseNativeDialog;
+  const QFileDialog::Options options = settings->nativeDlg() ? (QFileDialog::Options)0 : QFileDialog::DontUseNativeDialog;
   QString selectedFilter;
   QString filePath = QFileDialog::getSaveFileName(
     this,

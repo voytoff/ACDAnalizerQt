@@ -112,48 +112,7 @@ int TreeModel::rowCount(const QModelIndex &parent) const {
 
   return parentItem->childCount();
 }
-/*
-void TreeModel::setupModelData(const QList<QStringView> &lines, TreeItem *parent) {
-  struct ParentIndentation
-  {
-    TreeItem *parent;
-    qsizetype indentation;
-  };
 
-  QList<ParentIndentation> state{{parent, 0}};
-
-  for (const auto &line : lines) {
-    qsizetype position = 0;
-    for ( ; position < line.length() && line.at(position).isSpace(); ++position) {
-    }
-
-    const QStringView lineData = line.sliced(position).trimmed();
-    if (!lineData.isEmpty()) {
-      // Read the column data from the rest of the line.
-      const auto columnStrings = lineData.split(u'\t', Qt::SkipEmptyParts);
-      QVariantList columnData;
-      columnData.reserve(columnStrings.count());
-      for (const auto &columnString : columnStrings)
-        columnData << columnString.toString();
-
-      if (position > state.constLast().indentation) {
-        // Последний потомок текущего родителя теперь является новым родителем
-        // если только у текущего родителя нет потомков.
-        auto *lastParent = state.constLast().parent;
-        if (lastParent->childCount() > 0)
-          state.append({lastParent->child(lastParent->childCount() - 1), position});
-      } else {
-        while (position < state.constLast().indentation && !state.isEmpty())
-          state.removeLast();
-      }
-
-      // Добавляем новый элемент в список дочерних элементов текущего родительского элемента.
-      auto *lastParent = state.constLast().parent;
-      lastParent->appendChild(std::make_unique<TreeItem>(columnData, lastParent));
-    }
-  }
-}
-*/
 void TreeModel::setupModelData(const ACDObject *acdObject, TreeItem *parent) {
   QMap<QChar, QList<ChannelBlock*>> groups;
   foreach (ChannelBlock *chanelBlock, *acdObject->channels) {

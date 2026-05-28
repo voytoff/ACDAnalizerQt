@@ -9,8 +9,7 @@
 const QString Company = "NIIHM";
 const QString AppName = "ACDAnalizer";
 
-class Settings : public QSettings
-{
+class Settings : public QSettings {
   Q_OBJECT
 public:
 
@@ -24,6 +23,7 @@ public slots:
   QByteArray windowState(QByteArray value = QByteArray());
   QByteArray splitter(QByteArray value = 0);
   ColorScheme colorScheme(QVariant value = 0);
+  bool nativeDlg(QVariant value = {});
 
 signals:
   void propertyChanged(QString name, QVariant value);

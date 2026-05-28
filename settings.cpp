@@ -27,6 +27,13 @@ ColorScheme Settings::colorScheme(QVariant value) {
   auto result = this->value("colorScheme").toInt();
   return result == 0 ? ColorScheme::Light : (ColorScheme)this->value("colorScheme").toInt();
 }
+bool Settings::nativeDlg(QVariant value) {
+  if (value.isValid()) {
+    this->setValue("nativeDlg", value);
+    emit propertyChanged("nativeDlg", this->value("nativeDlg"));
+  }
+  return this->value("nativeDlg").toBool();
+}
 
 QByteArray Settings::geometry(QByteArray value) {
   if (!value.isEmpty())

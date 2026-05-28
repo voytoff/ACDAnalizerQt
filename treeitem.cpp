@@ -68,6 +68,8 @@ TreeItem *TreeItem::parentItem() {
 void TreeItem::toggle() {
   if (channelBlock.get()) {
     checked = !checked;
+  } else if (mchannelBlock.get()) {
+    checked = !checked;
   }
 }
 

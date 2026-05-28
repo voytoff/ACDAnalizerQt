@@ -7,6 +7,7 @@ SettingsDlg::SettingsDlg(Settings* settings, QWidget *parent)
   : QDialog(parent)
   , ui(new Ui::SettingsDlg)
   , settings(settings) {
+
   ui->setupUi(this);
 
   ui->frequency->addItem("1", 1);
@@ -22,6 +23,8 @@ SettingsDlg::SettingsDlg(Settings* settings, QWidget *parent)
   ui->colorScheme->addItem("Dark", ColorScheme::Dark);
   ui->colorScheme->setCurrentIndex(settings->colorScheme()-1);
 
+  ui->nativeDlg->setChecked(settings->nativeDlg());
+
   connect(this, &QDialog::finished, this, [this](int result) { accept(result); });
 
   setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
@@ -36,5 +39,6 @@ void SettingsDlg::accept(const int result) {
     settings->frequency(ui->frequency->currentData());
     settings->axisXType(ui->axisXType->currentData());
     settings->colorScheme(ui->colorScheme->currentData());
+    settings->nativeDlg(ui->nativeDlg->isChecked());
   }
 }

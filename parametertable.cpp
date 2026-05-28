@@ -4,14 +4,14 @@
 ParameterTable::ParameterTable(QVector<ChannelBlock *> channels, int frequency): headers{"Индекс","Время"} {
   foreach (ChannelBlock* channelBlock, channels) {
     auto array = channelBlock->array(frequency);
-    appendColumn(*array);
+    if (array) appendColumn(*array);
   }
 }
 
 ParameterTable::ParameterTable(QVector<MChannelBlock *> channels, int frequency): headers{"Индекс","Время"} {
   foreach (MChannelBlock* channelBlock, channels) {
     auto array = channelBlock->array(frequency);
-    appendColumn(*array);
+    if (array) appendColumn(*array);
   }
 }
 
