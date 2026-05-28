@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "acdobject.h"
+#include "mmpobject.h"
 #include "parametertable.h"
 #include "schemehelper.h"
 #include "settings.h"
@@ -27,6 +28,7 @@ protected:
   void closeEvent(QCloseEvent *event) override;
 
   ACDObject *acdObject;
+  MMPObject *mmpObject;
   Settings* settings;
 
 private:
@@ -38,11 +40,12 @@ private:
   void createTree();
   void selectChannel();
   void openACD(QPromise<ACDObject *> &promise, ACDObject* obj);
+  void openMMP(QPromise<MMPObject*> &promise, MMPObject* obj);
   void frequencyChanged(int index);
   ParameterTable* getTable();
   void about();
   int addTab(QWidget *widget, const QString &name);
-  void setColorScheme(ColorScheme scheme);
+  //void setColorScheme(ColorScheme scheme);
 
   QTreeView *view;
   TreeModel *model;

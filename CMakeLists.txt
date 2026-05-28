@@ -17,13 +17,25 @@ find_package(Qt6 REQUIRED COMPONENTS
     Concurrent
 )
 
-set(ACDFILEDIR "../ACD2FileQt")
-include_directories(${ACDFILEDIR}/lib)
-add_subdirectory(${ACDFILEDIR} ACD2File)
+set(ALLOW_DUPLICATE_CUSTOM_TARGETS TRUE)
+
+set(GLOBALLIBDIR "../GlobalLibQt")
+include_directories(${GLOBALLIBDIR})
+if (NOT TARGET GlobalLib)
+    add_subdirectory(${GLOBALLIBDIR} GlobalLib)
+endif()
 
 set(MMPFILEDIR "../MMPFileQt")
 include_directories(${MMPFILEDIR}/lib)
-add_subdirectory(${MMPFILEDIR} MMPFile)
+if (NOT TARGET MMPFile)
+    add_subdirectory(${MMPFILEDIR} MMPFile)
+endif()
+
+set(ACDFILEDIR "../ACD2FileQt")
+include_directories(${ACDFILEDIR}/lib)
+if (NOT TARGET ACD2File)
+    add_subdirectory(${ACDFILEDIR} ACD2File)
+endif()
 
 set(SCHEMEHELPEREDIR "../SchemeHelperQt")
 include_directories(${SCHEMEHELPEREDIR})
@@ -105,10 +117,7 @@ target_link_libraries(ACDAnalizer PRIVATE
     Qt6::Gui
     Qt6::Concurrent
     Qt6::Svg
-    #sal3
-    #cppu3
-    #cppuhelper3MSC
-    #mergedlo
+    GlobalLib
     ACD2File
     MMPFile
     SchemeHelper

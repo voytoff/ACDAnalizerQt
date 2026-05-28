@@ -1,7 +1,15 @@
 #include "treeitem.h"
 
 TreeItem::TreeItem(QVariantList data, TreeItem *parent, ChannelBlock* channelBlock)
-  : itemData(std::move(data)), parent(parent), channelBlock(channelBlock) {
+  : itemData(std::move(data))
+  , parent(parent)
+  , channelBlock(channelBlock) {
+  root = channelBlock == nullptr;
+}
+TreeItem::TreeItem(QVariantList data, TreeItem *parent, MChannelBlock* channelBlock)
+  : itemData(std::move(data))
+  , parent(parent)
+  , mchannelBlock(channelBlock) {
   root = channelBlock == nullptr;
 }
 
@@ -34,6 +42,16 @@ QVector<ChannelBlock*> TreeItem::channels() const {
   });
   return items;
 }
+QVector<MChannelBlock*> TreeItem::mchannels() const {
+  if (!root) return {};
+  QVector<MChannelBlock*> items;
+  std::for_each(childItems.cbegin(), childItems.cend(), [&items](const std::unique_ptr<TreeItem> &treeItem) {
+    if (treeItem->checked)
+      items.append(treeItem.get()->mchannelBlock.get());
+  });
+  return items;
+}
+
 
 int TreeItem::columnCount() const {
   return 1;

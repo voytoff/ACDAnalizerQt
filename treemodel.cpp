@@ -16,9 +16,15 @@ TreeModel::TreeModel(const QString &data, QObject *parent)
 }*/
 TreeModel::TreeModel(const ACDObject *acdObject, QObject *parent)
   : QAbstractItemModel(parent)
-  , rootItem(std::make_unique<TreeItem>(QVariantList{tr("Имя канала"), tr("Summary")})) {
+  , rootItem(std::make_unique<TreeItem>(QVariantList{tr("Имя канала"), tr("Summary")}, nullptr, (ChannelBlock*)nullptr)) {
   this->acdObject = acdObject;
   setupModelData(acdObject, rootItem.get());
+}
+TreeModel::TreeModel(const MMPObject *mmpObject, QObject *parent)
+  : QAbstractItemModel(parent)
+  , rootItem(std::make_unique<TreeItem>(QVariantList{tr("Имя канала"), tr("Summary")}, nullptr, (MChannelBlock*)nullptr)) {
+  this->mmpObject = mmpObject;
+  setupModelData(mmpObject, rootItem.get());
 }
 TreeModel::~TreeModel() = default;
 
@@ -156,7 +162,7 @@ void TreeModel::setupModelData(const ACDObject *acdObject, TreeItem *parent) {
   auto keys =  groups.keys();
   std::sort(keys.begin(), keys.end());
   foreach (QChar key, keys) {
-    auto symPtr = std::make_unique<TreeItem>(QVariantList{key}, parent);
+    auto symPtr = std::make_unique<TreeItem>(QVariantList{key}, parent, (ChannelBlock*)nullptr);
     TreeItem* symItem = symPtr.get();
     auto list = groups[key];
     std::sort(list.begin(), list.end(), [](ChannelBlock* a, ChannelBlock* b) {return a->name < b->name;});
@@ -166,10 +172,36 @@ void TreeModel::setupModelData(const ACDObject *acdObject, TreeItem *parent) {
   }
 }
 
+void TreeModel::setupModelData(const MMPObject *mmpObject, TreeItem *parent) {
+  QMap<QChar, QList<MChannelBlock*>> groups;
+  foreach (MChannelBlock *chanelBlock, *mmpObject->channels) {
+    groups[chanelBlock->name.at(0).toUpper()].append(chanelBlock);
+  }
+  auto keys =  groups.keys();
+  std::sort(keys.begin(), keys.end());
+  foreach (QChar key, keys) {
+    auto symPtr = std::make_unique<TreeItem>(QVariantList{key}, parent, (MChannelBlock*)nullptr);
+    TreeItem* symItem = symPtr.get();
+    auto list = groups[key];
+    std::sort(list.begin(), list.end(), [](MChannelBlock* a, MChannelBlock* b) {return a->name < b->name;});
+    foreach (MChannelBlock* item, list)
+      symItem->appendChild(std::make_unique<TreeItem>(QVariantList{item->name}, symItem, item));
+    parent->appendChild(std::move(symPtr));
+  }
+}
+
 QVector<ChannelBlock*> TreeModel::channels() const {
   QVector<ChannelBlock*> dest;
   foreach (auto root, rootItem->childs()) {
     dest.append(root->channels());
+  }
+  return dest;
+}
+
+QVector<MChannelBlock*> TreeModel::mchannels() const {
+  QVector<MChannelBlock*> dest;
+  foreach (auto root, rootItem->childs()) {
+    dest.append(root->mchannels());
   }
   return dest;
 }

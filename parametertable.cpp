@@ -1,7 +1,19 @@
 #include "parametertable.h"
 #include "datablockarray.h"
 
-ParameterTable::ParameterTable(): headers{"Индекс","Время"} {}
+ParameterTable::ParameterTable(QVector<ChannelBlock *> channels, int frequency): headers{"Индекс","Время"} {
+  foreach (ChannelBlock* channelBlock, channels) {
+    auto array = channelBlock->array(frequency);
+    appendColumn(*array);
+  }
+}
+
+ParameterTable::ParameterTable(QVector<MChannelBlock *> channels, int frequency): headers{"Индекс","Время"} {
+  foreach (MChannelBlock* channelBlock, channels) {
+    auto array = channelBlock->array(frequency);
+    appendColumn(*array);
+  }
+}
 
 ParameterRow* ParameterTable::row(int index) {
   return index < table.length() ? const_cast<ParameterRow*>(&table.at(index)) : nullptr;

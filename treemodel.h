@@ -8,8 +8,9 @@
 #include <QModelIndex>
 #include <QVariant>
 #include "acdobject.h"
+#include "mmpobject.h"
 
-class ChannelArray;
+class MChannelArray;
 class TreeItem;
 
 class TreeModel : public QAbstractItemModel {
@@ -20,6 +21,7 @@ public:
 
   //explicit TreeModel(const QString &data, QObject *parent = nullptr);
   explicit TreeModel(const ACDObject *acdObject, QObject *parent = nullptr);
+  explicit TreeModel(const MMPObject *mmpObject, QObject *parent = nullptr);
   ~TreeModel() override;
 
   QVariant data(const QModelIndex &index, int role) const override;
@@ -33,14 +35,16 @@ public:
   TreeItem* get(const QModelIndex &index) const;
 
 private:
-  static void setupModelData(const QList<QStringView> &lines, TreeItem *parent);
   static void setupModelData(const ACDObject *acdObject, TreeItem *parent);
+  static void setupModelData(const MMPObject *mmpObject, TreeItem *parent);
 
   std::unique_ptr<TreeItem> rootItem;
   const ACDObject *acdObject;
+  const MMPObject *mmpObject;
 
 public slots:
   QVector<ChannelBlock*> channels() const;
+  QVector<MChannelBlock*> mchannels() const;
 };
 
 #endif // TREEMODEL_H

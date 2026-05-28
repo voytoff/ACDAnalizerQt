@@ -1,6 +1,8 @@
 #ifndef PARAMETERTABLE_H
 #define PARAMETERTABLE_H
 
+#include "channelblock.h"
+#include "mchannelblock.h"
 #include "datablockarray.h"
 #include "parameter.h"
 #include "parameterrow.h"
@@ -9,7 +11,8 @@
 class ParameterTable
 {
 public:
-  ParameterTable();
+  ParameterTable(QVector<ChannelBlock*> channels, int frequency);
+  ParameterTable(QVector<MChannelBlock*> channels, int frequency);
   QStringList headers;
   QList<ParameterRow> table;
   ParameterRow *row(int index);

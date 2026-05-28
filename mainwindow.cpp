@@ -5,7 +5,7 @@
 #include "tablemodel.h"
 #include "tableview.h"
 #include "treepaintdelegate.h"
-#include "channelblock.h"
+#include "mchannelblock.h"
 #include "settingsdlg.h"
 #include "schemehelper.h"
 
@@ -190,7 +190,6 @@ void MainWindow::openExp() {
     progressBar->show();
 
     if (selectedFilter == filter_acd) {
-
       QFutureWatcher<ACDObject*> *watcher = new QFutureWatcher<ACDObject*>(this);
       connect(watcher, &QFutureWatcher<ACDObject*>::finished, this, [this, watcher]() {
         statusBar()->showMessage("Готово");
@@ -214,16 +213,43 @@ void MainWindow::openExp() {
           .withArguments(this, obj)
           .withPriority(5)
           .spawn());
-    }
 
     } else if (selectedFilter == filter_mmp) {
+      QFutureWatcher<MMPObject*> *watcher = new QFutureWatcher<MMPObject*>(this);
+      connect(watcher, &QFutureWatcher<MMPObject*>::finished, this, [this, watcher]() {
+        statusBar()->showMessage("Готово");
+        mmpObject = watcher->result();
+        model = new TreeModel(mmpObject);
+        view->setModel(model);
+        progressBar->hide();
+      });
+
+      MMPObject* obj = new MMPObject(files);
+      //connect(obj, &ACDObject::fileLoaded, this, [this](int index, QString fileName) {});
+      //connect(obj, &ACDObject::channelBlockRead, this, [this, obj](QString fileName, int channelID, QString name) {
+      //  statusBar()->showMessage(QString("%1 : %2 : %3").arg(fileName).arg(channelID).arg(name));
+      //});
+      connect(obj, &MMPObject::dataBlockRead, this, [this, obj](QString fileName, int channelID, int blockID, int size) {
+        statusBar()->showMessage(QString("%1 : %2").arg(fileName, obj->channels->value(channelID)->name));
+      });
+      watcher->setFuture(
+        QtConcurrent::task(
+          &MainWindow::openMMP)
+          .withArguments(this, obj)
+          .withPriority(5)
+          .spawn());
 
     } else {
 
     }
+  }
 }
 
 void MainWindow::openACD(QPromise<ACDObject*> &promise, ACDObject* obj) {
+  obj->load();
+  promise.addResult(obj);
+}
+void MainWindow::openMMP(QPromise<MMPObject*> &promise, MMPObject* obj) {
   obj->load();
   promise.addResult(obj);
 }
@@ -232,6 +258,9 @@ void MainWindow::closeExp() {
   if (acdObject) {
     acdObject->close();
     acdObject = nullptr;
+  } else if (mmpObject) {
+    mmpObject->close();
+    mmpObject = nullptr;
   }
 }
 
@@ -272,33 +301,34 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   QMainWindow::closeEvent(event);
 }
 
-ParameterTable *MainWindow::getTable() {
-  if (!acdObject) {
-    QApplication::beep();
-    return nullptr;
-  }
-  auto channels = model->channels();
-  if (channels.count() == 0) {
-    QApplication::beep();
-    return nullptr;
-  }
-  ParameterTable* table = new ParameterTable();
-  foreach (ChannelBlock* channelBlock, channels) {
-    auto array = channelBlock->array(settings->frequency());
-    table->appendColumn(*array);
-  }
-  return table;
-}
-
 int MainWindow::addTab(QWidget *widget, const QString &name) {
   int index = tabWidget->addTab(widget, name);
   tabWidget->setCurrentIndex(index);
   return index;
 }
 
-void MainWindow::setColorScheme(ColorScheme scheme) {
-  settings->colorScheme(scheme);
-  schemeHelper->applayColorScheme(scheme);
+ParameterTable *MainWindow::getTable() {
+  if (!(acdObject || mmpObject)) {
+    QApplication::beep();
+    return nullptr;
+  }
+  ParameterTable* table = nullptr;
+  if (acdObject) {
+    auto channels = model->channels();
+    if (channels.count() == 0) {
+      QApplication::beep();
+      return nullptr;
+    }
+    ParameterTable* table = new ParameterTable(channels, settings->frequency());
+  } else if (mmpObject) {
+    auto channels = model->mchannels();
+    if (channels.count() == 0) {
+      QApplication::beep();
+      return nullptr;
+    }
+    ParameterTable* table = new ParameterTable(channels, settings->frequency());
+  }
+  return table;
 }
 
 void MainWindow::showTable() {
@@ -330,7 +360,6 @@ void MainWindow::doSettings() {
       schemeHelper->applayColorScheme(colorScheme);
   }
 }
-
 
 void MainWindow::about() {
   QMessageBox::about(
