@@ -40,3 +40,8 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
 void TableModel::addMapping(const QString &color, const QRect &area) {
   mapping.insert(color, area);
 }
+
+QString TableModel::unit(int section) {
+  if (section >= table->headers.size()) return nullptr;
+  return table->units.at(section);
+}

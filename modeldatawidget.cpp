@@ -23,7 +23,7 @@ ModelDataWidget::ModelDataWidget(TableModel* model, AxisXType axisXType, QWidget
 
   for (int n = 2; n < model->columnCount(); n++) {
     auto series = new QLineSeries;
-    series->setName(model->headerData(n, Qt::Horizontal, Qt::DisplayRole).toString());
+    series->setName(QString("%1 (%2)").arg(model->headerData(n, Qt::Horizontal, Qt::DisplayRole).toString(), model->unit(n)));
     QVXYModelMapper* mapper = new QVXYModelMapper(this);
     mapper->setXColumn(axisXType == AxisXType::Time ? 1 : 0);
     mapper->setYColumn(n);
@@ -38,6 +38,8 @@ ModelDataWidget::ModelDataWidget(TableModel* model, AxisXType axisXType, QWidget
 
     auto axisY = createAxisY();
     axisY->setLabelsColor(QColor(seriesColorHex));
+    //axisY->setTitleText(model->unit(n));
+    //axisY->setTitleBrush(QBrush(axisY->labelsColor()));
     chart->addAxis(axisY, Qt::AlignLeft);
     //auto axisX = createAxisX(axisXType);
     //chart->addAxis(axisX, Qt::AlignBottom);

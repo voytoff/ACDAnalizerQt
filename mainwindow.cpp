@@ -158,7 +158,7 @@ void MainWindow::createDashboard() {
   layout->setContentsMargins(2, 1, 2, 0);
 
   splitter = new QSplitter(this);
-  splitter->addWidget(view);
+  splitter->addWidget(treeView);
   splitter->addWidget(tabWidget);
   layout->addWidget(splitter, 0, 0);
 
@@ -186,7 +186,7 @@ void MainWindow::openExp() {
     &selectedFilter,
     options);
   if (!files.isEmpty() && files.length() > 0) {
-    view->setModel(NULL);
+    treeView->setModel(NULL);
     progressBar->show();
 
     if (selectedFilter == filter_acd) {
@@ -195,7 +195,7 @@ void MainWindow::openExp() {
         statusBar()->showMessage("Готово");
         acdObject = watcher->result();
         model = new TreeModel(acdObject);
-        view->setModel(model);
+        treeView->setModel(model);
         progressBar->hide();
       });
 
@@ -204,7 +204,7 @@ void MainWindow::openExp() {
       //connect(obj, &ACDObject::channelBlockRead, this, [this, obj](QString fileName, int channelID, QString name) {
       //  statusBar()->showMessage(QString("%1 : %2 : %3").arg(fileName).arg(channelID).arg(name));
       //});
-      connect(obj, &ACDObject::dataBlockRead, this, [this, obj](QString fileName, int channelID, int blockID, int size) {
+      connect(obj, &ACDObject::dataBlockRead, this, [this, obj](QString fileName, int channelID, int, int) {
         statusBar()->showMessage(QString("%1 : %2").arg(fileName, obj->channels->value(channelID)->name));
       });
       watcher->setFuture(
@@ -220,7 +220,7 @@ void MainWindow::openExp() {
         statusBar()->showMessage("Готово");
         mmpObject = watcher->result();
         model = new TreeModel(mmpObject);
-        view->setModel(model);
+        treeView->setModel(model);
         progressBar->hide();
       });
 
@@ -255,12 +255,26 @@ void MainWindow::openMMP(QPromise<MMPObject*> &promise, MMPObject* obj) {
 }
 
 void MainWindow::closeExp() {
+  if (QMessageBox::question(this, AppName, "Закрыть текущий набор данных?") != QMessageBox::Yes) return;
   if (acdObject) {
     acdObject->close();
     acdObject = nullptr;
   } else if (mmpObject) {
     mmpObject->close();
     mmpObject = nullptr;
+  }
+
+  for (int index = tabWidget->count() - 1; index > -1; index--) {
+    tabWidget->widget(index)->close();
+    tabWidget->removeTab(index);
+  }
+  if (currentTable) {
+    currentTable->clear();
+    currentTable = nullptr;
+  }
+  if (model) {
+    treeView->setModel(nullptr);
+    model = nullptr;
   }
 }
 
@@ -277,18 +291,18 @@ void MainWindow::saveLayout() {
 }
 
 void MainWindow::createTree() {
-  view = new QTreeView();
-  view->header()->hide();
-  connect(view, &QTreeView::doubleClicked, this, &MainWindow::selectChannel);
-  QLocale locale = view->locale();
+  treeView = new QTreeView();
+  treeView->header()->hide();
+  connect(treeView, &QTreeView::doubleClicked, this, &MainWindow::selectChannel);
+  QLocale locale = treeView->locale();
   locale.setNumberOptions(QLocale::OmitGroupSeparator);
-  view->setLocale(locale);
-  view->setItemDelegate(new TreePaintDelegate());
-  view->setSelectionMode(QAbstractItemView::NoSelection);
+  treeView->setLocale(locale);
+  treeView->setItemDelegate(new TreePaintDelegate());
+  treeView->setSelectionMode(QAbstractItemView::NoSelection);
 }
 
 void MainWindow::selectChannel() {
-  QModelIndex index = view->currentIndex();
+  QModelIndex index = treeView->currentIndex();
   if (index.isValid()) {
     auto item = model->get(index);
     item->toggle();
@@ -307,47 +321,62 @@ int MainWindow::addTab(QWidget *widget, const QString &name) {
   return index;
 }
 
-ParameterTable *MainWindow::getTable() {
+void MainWindow::getTable(const std::function<void(ParameterTable*)>& callback) {
   if (!(acdObject || mmpObject)) {
     QApplication::beep();
-    return nullptr;
+    callback(nullptr);
   }
-  ParameterTable* table = nullptr;
+  // Пока что прибиваем гвоздями работу с двумя типами объектов
+  int frequency = settings->frequency();
   if (acdObject) {
     auto channels = model->channels();
     if (channels.count() == 0) {
       QApplication::beep();
-      return nullptr;
+      callback(nullptr);
+    } else {
+      auto future = QtConcurrent::run([this, channels, frequency, callback]() {
+        progressBar->show();
+        auto table = new ParameterTable(channels, frequency);
+        progressBar->hide();
+        QMetaObject::invokeMethod(this, callback, table);
+      });
     }
-    table = new ParameterTable(channels, settings->frequency());
   } else if (mmpObject) {
     auto channels = model->mchannels();
     if (channels.count() == 0) {
       QApplication::beep();
-      return nullptr;
+      callback(nullptr);
+    } else {
+      auto future = QtConcurrent::run([this, channels, frequency, callback]() {
+        progressBar->show();
+        auto table = new ParameterTable(channels, frequency);
+        progressBar->hide();
+        QMetaObject::invokeMethod(this, callback, table);
+      });
     }
-    table = new ParameterTable(channels, settings->frequency());
   }
-  return table;
 }
 
 void MainWindow::showTable() {
-  ParameterTable* table = getTable();
-  if (!table) return;
-  TableModel* model = new TableModel(table);
-  TableView* view = new TableView();
-  view->setModel(model);
-  addTab(view, table->headers.at(2));
+  getTable([this](ParameterTable* table) {
+    currentTable = table;
+    if (!currentTable) return;
+    TableModel* model = new TableModel(currentTable);
+    TableView* view = new TableView();
+    view->setModel(model);
+    addTab(view, currentTable->tittle());
+  });
 }
 
 void MainWindow::showChart() {
-  ParameterTable* table = getTable();
-  if (!table) return;
-  TableModel* model = new TableModel(table);
+  getTable([this](ParameterTable* table) {
+    currentTable = table;
+    if (!currentTable) return;
+    TableModel* model = new TableModel(currentTable);
 
-  ModelDataWidget* view = new ModelDataWidget(model, settings->axisXType());
-  ///splitter->replaceWidget(1, view);
-  addTab(view, table->headers.at(2));
+    ModelDataWidget* view = new ModelDataWidget(model, settings->axisXType());
+    addTab(view, currentTable->tittle());
+  });
 }
 
 void MainWindow::doSettings() {
@@ -381,8 +410,7 @@ void MainWindow::exportExp() {
     options);
   if (filePath.isEmpty()) return;
 
-  ParameterTable* table = getTable();
-  if (!table) return;
+  if (!currentTable) return;
 
   auto *book = ods::Book::New();
   ods::AutoDelete<ods::Book*> ad(book);
@@ -390,15 +418,15 @@ void MainWindow::exportExp() {
   auto *sheet = spreadsheet->NewSheet("Лист1");
   // 1. Headers
   auto *row = sheet->NewRowAt(0);
-  for (int n = 0; n < table->headers.length(); n++) {
+  for (int n = 0; n < currentTable->headers.length(); n++) {
     auto *cell = row->NewCellAt(n);
-    cell->SetValue(table->headers.at(n));
+    cell->SetValue(currentTable->headers.at(n));
   }
   // 2. Values
   auto *style = odsutils::getDateStyle(book);
-  for(int r = 1; r < table->table.count(); r++) {
+  for(int r = 1; r < currentTable->table.count(); r++) {
     auto *row = sheet->NewRowAt(r);
-    auto tableRow = table->row(r - 1);
+    auto tableRow = currentTable->row(r - 1);
     for (int n = 0; n < tableRow->count(); n++) {
       auto *cell = row->NewCellAt(n);
       odsutils::setValue(cell, tableRow->value(n));

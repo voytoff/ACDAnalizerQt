@@ -42,18 +42,18 @@ private:
   void openACD(QPromise<ACDObject *> &promise, ACDObject* obj);
   void openMMP(QPromise<MMPObject*> &promise, MMPObject* obj);
   void frequencyChanged(int index);
-  ParameterTable* getTable();
+  void getTable(const std::function<void(ParameterTable*)>& callback);
   void about();
   int addTab(QWidget *widget, const QString &name);
-  //void setColorScheme(ColorScheme scheme);
 
-  QTreeView *view;
+  QTreeView *treeView;
   TreeModel *model;
   QSplitter *splitter;
   QTabWidget *tabWidget;
   QWidget *empty;
   QProgressBar *progressBar;
   QSplashScreen *splash;
+  ParameterTable* currentTable;
 
   SchemeHelper *schemeHelper;
 

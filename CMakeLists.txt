@@ -7,6 +7,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+cmake_policy(SET CMP0100 NEW)
+
 find_package(Qt6 REQUIRED COMPONENTS
     Charts
     Quick
@@ -16,8 +18,6 @@ find_package(Qt6 REQUIRED COMPONENTS
     Gui
     Concurrent
 )
-
-set(ALLOW_DUPLICATE_CUSTOM_TARGETS TRUE)
 
 set(GLOBALLIBDIR "../GlobalLibQt")
 include_directories(${GLOBALLIBDIR})
