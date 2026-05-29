@@ -18,8 +18,9 @@ const QString filter_acd = "ACD2 файлы (*.acd)";
 const QString filter_mmp = "MMP файлы (*.mmp *.prm)";
 const QString filter_all = "Все файлы (*)";
 
-class MainWindow : public QMainWindow
-{
+const QString ready = "Готово";
+
+class MainWindow : public QMainWindow {
   Q_OBJECT
 public:
   explicit MainWindow(QWidget *parent = nullptr);
@@ -42,7 +43,7 @@ private:
   void openACD(QPromise<ACDObject *> &promise, ACDObject* obj);
   void openMMP(QPromise<MMPObject*> &promise, MMPObject* obj);
   void frequencyChanged(int index);
-  void getTable(const std::function<void(ParameterTable*)>& callback);
+  void getTable(const std::function<void (ParameterTable *)> &callback);
   void about();
   int addTab(QWidget *widget, const QString &name);
 
@@ -50,7 +51,7 @@ private:
   TreeModel *model;
   QSplitter *splitter;
   QTabWidget *tabWidget;
-  QWidget *empty;
+  //QWidget *empty;
   QProgressBar *progressBar;
   QSplashScreen *splash;
   ParameterTable* currentTable;

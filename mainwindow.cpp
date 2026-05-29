@@ -43,7 +43,6 @@
 MainWindow::MainWindow(QWidget *parent)
   : QMainWindow{parent}
   , acdObject(nullptr)
-  , empty(new QWidget())
   , settings(new Settings())
   , progressBar(new QProgressBar())
   , tabWidget(new QTabWidget)
@@ -192,7 +191,7 @@ void MainWindow::openExp() {
     if (selectedFilter == filter_acd) {
       QFutureWatcher<ACDObject*> *watcher = new QFutureWatcher<ACDObject*>(this);
       connect(watcher, &QFutureWatcher<ACDObject*>::finished, this, [this, watcher]() {
-        statusBar()->showMessage("Готово");
+        statusBar()->showMessage(ready);
         acdObject = watcher->result();
         model = new TreeModel(acdObject);
         treeView->setModel(model);
@@ -217,7 +216,7 @@ void MainWindow::openExp() {
     } else if (selectedFilter == filter_mmp) {
       QFutureWatcher<MMPObject*> *watcher = new QFutureWatcher<MMPObject*>(this);
       connect(watcher, &QFutureWatcher<MMPObject*>::finished, this, [this, watcher]() {
-        statusBar()->showMessage("Готово");
+        statusBar()->showMessage(ready);
         mmpObject = watcher->result();
         model = new TreeModel(mmpObject);
         treeView->setModel(model);
@@ -229,7 +228,7 @@ void MainWindow::openExp() {
       //connect(obj, &ACDObject::channelBlockRead, this, [this, obj](QString fileName, int channelID, QString name) {
       //  statusBar()->showMessage(QString("%1 : %2 : %3").arg(fileName).arg(channelID).arg(name));
       //});
-      connect(obj, &MMPObject::dataBlockRead, this, [this, obj](QString fileName, int channelID, int blockID, int size) {
+      connect(obj, &MMPObject::dataBlockRead, this, [this, obj](QString fileName, int channelID, int, int) {
         statusBar()->showMessage(QString("%1 : %2").arg(fileName, obj->channels->value(channelID)->name));
       });
       watcher->setFuture(
@@ -334,12 +333,15 @@ void MainWindow::getTable(const std::function<void(ParameterTable*)>& callback) 
       QApplication::beep();
       callback(nullptr);
     } else {
-      auto future = QtConcurrent::run([this, channels, frequency, callback]() {
+      callback(new ParameterTable(channels, frequency));
+      /*
+      auto future = QtConcurrent::run([=, this]() {
         progressBar->show();
-        auto table = new ParameterTable(channels, frequency);
+        auto table = std::make_unique<ParameterTable>(channels, frequency);
         progressBar->hide();
-        QMetaObject::invokeMethod(this, callback, table);
+        QMetaObject::invokeMethod(this, callback, table.get());
       });
+      */
     }
   } else if (mmpObject) {
     auto channels = model->mchannels();
@@ -347,18 +349,21 @@ void MainWindow::getTable(const std::function<void(ParameterTable*)>& callback) 
       QApplication::beep();
       callback(nullptr);
     } else {
-      auto future = QtConcurrent::run([this, channels, frequency, callback]() {
+      callback(new ParameterTable(channels, frequency));
+      /*
+      auto future = QtConcurrent::run([=, this]() {
         progressBar->show();
-        auto table = new ParameterTable(channels, frequency);
+        auto table = std::make_unique<ParameterTable>(channels, frequency);
         progressBar->hide();
-        QMetaObject::invokeMethod(this, callback, table);
+        QMetaObject::invokeMethod(this, callback, table.get());
       });
+      */
     }
   }
 }
 
 void MainWindow::showTable() {
-  getTable([this](ParameterTable* table) {
+  getTable([=, this](ParameterTable* table) {
     currentTable = table;
     if (!currentTable) return;
     TableModel* model = new TableModel(currentTable);
@@ -369,11 +374,10 @@ void MainWindow::showTable() {
 }
 
 void MainWindow::showChart() {
-  getTable([this](ParameterTable* table) {
+  getTable([=, this](ParameterTable* table) {
     currentTable = table;
     if (!currentTable) return;
     TableModel* model = new TableModel(currentTable);
-
     ModelDataWidget* view = new ModelDataWidget(model, settings->axisXType());
     addTab(view, currentTable->tittle());
   });

@@ -1,5 +1,6 @@
 #include "parametertable.h"
 #include "datablockarray.h"
+#include <qstatusbar.h>
 
 ParameterTable::ParameterTable(QVector<ChannelBlock *> channels, int frequency)
   : headers{"Индекс","Время"}

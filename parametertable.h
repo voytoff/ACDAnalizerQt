@@ -6,12 +6,14 @@
 #include "datablockarray.h"
 #include "parameter.h"
 #include "parameterrow.h"
+
 #include <QStringList>
+#include <QObject>
 
 class ParameterTable {
 public:
-  ParameterTable(QVector<ChannelBlock*> channels, int frequency);
-  ParameterTable(QVector<MChannelBlock*> channels, int frequency);
+  explicit ParameterTable(QVector<ChannelBlock*> channels, int frequency);
+  explicit ParameterTable(QVector<MChannelBlock*> channels, int frequency);
   QStringList headers;
   QStringList units;
   QList<ParameterRow> table;
