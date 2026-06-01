@@ -81,3 +81,24 @@ void Cell::WriteValue(QXmlStreamWriter &xml)
 	}
 }
 ```
+
+# Ошибка в среде Linux (Ubuntu) по поводу библиотеки osd2->zlib
+В файле по пути Desktop_Qt_6_11_1-Debug/_deps/ods2-subbuild/CMakeCache.txt заменить zlib на **ZLIB**
+
+f (USE_SYSTEM_ZLIB)
+  find_package(**ZLIB** REQUIRED)
+else()
+    add_subdirectory(zlib SYSTEM)
+endif()
+
+Возможно перед этим нужно установитьь пакет
+```bash
+sudo apt-get install zlib1g-dev
+```
+
+# шибка в среде Linux (Ubuntu) по поводу библиотеки osd2-src/ods/io.cc
+```cpp
+#include <zstd.h>
+```
+
+### Тупо закоментировать
