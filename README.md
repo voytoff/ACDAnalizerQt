@@ -100,5 +100,14 @@ sudo apt-get install zlib1g-dev
 ```cpp
 #include <zstd.h>
 ```
-
 ### Тупо закоментировать
+
+
+# Git на Linux-е !!! В терминале
+```bash
+git push origin main
+```
+Можно попробывать встроить PAT в запрос
+git remote set-url origin https://<YOUR_GITHUB_TOKEN>@://github.com
+
+
